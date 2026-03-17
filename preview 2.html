@@ -1,279 +1,277 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Peptide Dose Planner</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ICT ES Intraday Playbook</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #141b33;
+      --panel-2: #1b2445;
+      --text: #e8ecff;
+      --muted: #a8b1d8;
+      --bull: #2dd4bf;
+      --bear: #f87171;
+      --accent: #60a5fa;
+      --warn: #fbbf24;
+    }
 
-<style>
+    * { box-sizing: border-box; }
 
-body{
-font-family:Arial, Helvetica, sans-serif;
-margin:0;
-background:#f4f7fb;
-color:#333;
-}
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top, #152041 0%, var(--bg) 60%);
+    }
 
-header{
-background:linear-gradient(90deg,#2a7cff,#00c6ff);
-color:white;
-padding:40px;
-text-align:center;
-}
+    header {
+      text-align: center;
+      padding: 36px 20px 20px;
+    }
 
-header h1{
-margin:0;
-font-size:40px;
-}
+    header h1 {
+      margin: 0;
+      font-size: 34px;
+      letter-spacing: 0.5px;
+    }
 
-.container{
-max-width:1100px;
-margin:auto;
-padding:30px;
-}
+    header p {
+      color: var(--muted);
+      margin-top: 8px;
+    }
 
-.card{
-background:white;
-padding:25px;
-margin-bottom:25px;
-border-radius:12px;
-box-shadow:0 10px 25px rgba(0,0,0,0.1);
-}
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      gap: 18px;
+    }
 
-label{
-font-weight:bold;
-display:block;
-margin-top:12px;
-}
+    .card {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 12px;
+      padding: 18px;
+    }
 
-input{
-width:100%;
-padding:10px;
-margin-top:5px;
-border-radius:6px;
-border:1px solid #ccc;
-}
+    h2 {
+      margin-top: 0;
+      font-size: 22px;
+    }
 
-button{
-margin-top:20px;
-padding:14px;
-width:100%;
-background:#2a7cff;
-border:none;
-border-radius:8px;
-color:white;
-font-size:18px;
-cursor:pointer;
-}
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
 
-button:hover{
-background:#1e63cc;
-}
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
 
-.week-grid{
-display:grid;
-grid-template-columns:repeat(4,1fr);
-gap:10px;
-margin-top:10px;
-}
+    select,
+    input {
+      width: 100%;
+      background: #0d1430;
+      color: var(--text);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      border-radius: 8px;
+      padding: 10px;
+    }
 
-.result{
-margin-top:20px;
-background:#eef4ff;
-padding:20px;
-border-radius:10px;
-font-size:17px;
-}
+    .checklist {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 16px;
+      margin-top: 10px;
+    }
 
-.info{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:20px;
-align-items:center;
-}
+    .checklist label {
+      font-weight: normal;
+      margin: 0;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
 
-.info img{
-width:100%;
-border-radius:10px;
-}
+    button {
+      margin-top: 14px;
+      width: 100%;
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 8px;
+      padding: 12px;
+      cursor: pointer;
+    }
 
-footer{
-text-align:center;
-padding:20px;
-color:#777;
-}
+    .result {
+      margin-top: 14px;
+      background: rgba(15, 23, 42, 0.65);
+      border-left: 4px solid var(--accent);
+      border-radius: 8px;
+      padding: 12px;
+      line-height: 1.5;
+    }
 
-@media(max-width:700px){
-.week-grid{
-grid-template-columns:1fr 1fr;
-}
+    .pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      margin-right: 6px;
+      margin-bottom: 6px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      color: var(--muted);
+    }
 
-.info{
-grid-template-columns:1fr;
-}
-}
+    .bull { color: var(--bull); border-color: rgba(45, 212, 191, 0.5); }
+    .bear { color: var(--bear); border-color: rgba(248, 113, 113, 0.5); }
+    .warn { color: var(--warn); border-color: rgba(251, 191, 36, 0.5); }
 
-</style>
-
+    @media (max-width: 760px) {
+      .grid,
+      .checklist {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
-
 <body>
+  <header>
+    <h1>ICT / Liquidity-Based Intraday Strategy</h1>
+    <p>Execution model for ES futures (5m), with session-aware bias and confirmation checklist.</p>
+  </header>
 
-<header>
+  <div class="container">
+    <div class="card">
+      <h2>Session + Bias Builder</h2>
+      <div class="grid">
+        <div>
+          <label for="session">Active Session</label>
+          <select id="session">
+            <option value="london">London (liquidity move)</option>
+            <option value="newyork">New York (continuation/reversal)</option>
+          </select>
+        </div>
+        <div>
+          <label for="dayType">Day Context</label>
+          <select id="dayType">
+            <option value="regular">Regular Session Day</option>
+            <option value="monday">Monday (often consolidation)</option>
+            <option value="rollover">Contract Rollover (choppy/fake moves)</option>
+          </select>
+        </div>
+        <div>
+          <label for="pdhState">PDH Interaction</label>
+          <select id="pdhState">
+            <option value="above">Price accepted above PDH (bullish)</option>
+            <option value="rejected">PDH rejected as resistance (bearish)</option>
+            <option value="inside">Still inside range / undecided</option>
+          </select>
+        </div>
+        <div>
+          <label for="liquiditySweep">Recent Liquidity Event</label>
+          <select id="liquiditySweep">
+            <option value="ssl">Sell-side liquidity swept first</option>
+            <option value="bsl">Buy-side liquidity swept first</option>
+            <option value="none">No clean sweep yet</option>
+          </select>
+        </div>
+      </div>
+      <button onclick="buildPlan()">Generate Execution Plan</button>
+      <div id="plan" class="result">Set context and click <b>Generate Execution Plan</b>.</div>
+    </div>
 
-<h1>🧪 Peptide Dose Planner</h1>
-<p>Calculate reconstitution, weekly injection units, and vial duration</p>
+    <div class="card">
+      <h2>Execution Checklist (Only Enter After Confirmation)</h2>
+      <div class="checklist">
+        <label><input type="checkbox" id="c1" /> Liquidity sweep occurred (PDH/PDL/EQH/EQL)</label>
+        <label><input type="checkbox" id="c2" /> Displacement candle printed</label>
+        <label><input type="checkbox" id="c3" /> Structure confirmed (BOS/MSS/CHoCH)</label>
+        <label><input type="checkbox" id="c4" /> Pullback to FVG or OB</label>
+        <label><input type="checkbox" id="c5" /> Entry in premium/discount aligned with bias</label>
+        <label><input type="checkbox" id="c6" /> Clear next liquidity target defined</label>
+      </div>
+      <button onclick="gradeSetup()">Grade Setup Quality</button>
+      <div id="grade" class="result">Checklist score will appear here.</div>
+    </div>
 
-</header>
+    <div class="card">
+      <h2>Core Playbook</h2>
+      <span class="pill">Liquidity → Imbalance → Liquidity</span>
+      <span class="pill">Accumulation → Manipulation → Distribution</span>
+      <span class="pill">Do not trade mid-range</span>
+      <p><b>High-probability models:</b> PDH reclaim continuation, PDH rejection continuation, sweep-and-reverse, and FVG fill continuation.</p>
+      <p><b>Bullish path:</b> sweep lows → displacement up → BOS up → pullback to discount FVG/OB → target weak highs.</p>
+      <p><b>Bearish path:</b> sweep highs → rejection in premium → MSS/BOS down → retest premium FVG/OB → target liquidity below.</p>
+    </div>
+  </div>
 
-<div class="container">
+  <script>
+    function buildPlan() {
+      const session = document.getElementById('session').value;
+      const dayType = document.getElementById('dayType').value;
+      const pdhState = document.getElementById('pdhState').value;
+      const sweep = document.getElementById('liquiditySweep').value;
+      const plan = document.getElementById('plan');
 
-<div class="card">
+      let bias = 'neutral';
+      let notes = [];
 
-<h2>Vial Setup</h2>
+      if (pdhState === 'above' || sweep === 'ssl') bias = 'bullish';
+      if (pdhState === 'rejected' || sweep === 'bsl') bias = 'bearish';
+      if ((pdhState === 'inside' && sweep === 'none')) bias = 'neutral';
 
-<label>Peptide in vial (mg)</label>
-<input id="vial" placeholder="Example: 10">
+      if (session === 'london') {
+        notes.push('Expect liquidity engineering first; avoid early impulse chasing.');
+      } else {
+        notes.push('New York often continues London move or reverses after a sweep.');
+      }
 
-<label>Bacteriostatic Water Added (ml)</label>
-<input id="water" placeholder="Example: 2">
+      if (dayType === 'monday') {
+        notes.push('Monday behavior: consolidation is common; reduce size and wait for clear displacement.');
+      }
+      if (dayType === 'rollover') {
+        notes.push('Rollover condition: expect chop and fake breaks; require stronger confirmation.');
+      }
 
-<label>Start Date</label>
-<input type="date" id="start">
+      if (bias === 'bullish') {
+        notes.push('Plan: buy discount pullback into FVG/OB after BOS/MSS confirmation.');
+        notes.push('Targets: weak highs / next buy-side liquidity pools.');
+      } else if (bias === 'bearish') {
+        notes.push('Plan: sell premium pullback into FVG/OB after MSS/BOS down.');
+        notes.push('Targets: weak lows / next sell-side liquidity pools.');
+      } else {
+        notes.push('No-trade bias: wait for sweep + displacement, then reassess.');
+      }
 
-</div>
+      const biasClass = bias === 'bullish' ? 'bull' : bias === 'bearish' ? 'bear' : 'warn';
+      const biasText = bias === 'bullish' ? 'Bullish Bias' : bias === 'bearish' ? 'Bearish Bias' : 'Neutral / Wait';
 
-<div class="card">
+      plan.innerHTML = `<span class="pill ${biasClass}">${biasText}</span><br>${notes.map(n => `• ${n}`).join('<br>')}`;
+    }
 
-<h2>Weekly Dosage Plan (mg)</h2>
+    function gradeSetup() {
+      const checks = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6'];
+      const score = checks.filter(id => document.getElementById(id).checked).length;
+      const grade = document.getElementById('grade');
 
-<div class="week-grid">
-
-<input id="w1" placeholder="Week 1">
-<input id="w2" placeholder="Week 2">
-<input id="w3" placeholder="Week 3">
-<input id="w4" placeholder="Week 4">
-
-<input id="w5" placeholder="Week 5">
-<input id="w6" placeholder="Week 6">
-<input id="w7" placeholder="Week 7">
-<input id="w8" placeholder="Week 8">
-
-</div>
-
-<button onclick="calculate()">Calculate Plan</button>
-
-<div id="result" class="result"></div>
-
-</div>
-
-
-<div class="card">
-
-<h2>📚 How Peptide Reconstitution Works</h2>
-
-<div class="info">
-
-<img src="https://images.unsplash.com/photo-1581595219315-a187dd40c322">
-
-<div>
-
-<p>
-Peptides usually come as a **freeze-dried powder** inside a vial.
-Before use, the powder must be mixed with **bacteriostatic water**.
-</p>
-
-<p>
-The amount of water added determines the **concentration** of the peptide.
-This calculator converts your planned weekly dosage into **syringe units**.
-</p>
-
-<p>
-The planner also estimates:
-</p>
-
-<ul>
-<li>How much to inject each week</li>
-<li>Remaining peptide in the vial</li>
-<li>When the vial will run out</li>
-</ul>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<footer>
-
-Peptide Dose Planner • Educational Tool
-
-</footer>
-
-<script>
-
-function calculate(){
-
-let vial=parseFloat(document.getElementById("vial").value)
-let water=parseFloat(document.getElementById("water").value)
-
-let doses=[
-parseFloat(w1.value)||0,
-parseFloat(w2.value)||0,
-parseFloat(w3.value)||0,
-parseFloat(w4.value)||0,
-parseFloat(w5.value)||0,
-parseFloat(w6.value)||0,
-parseFloat(w7.value)||0,
-parseFloat(w8.value)||0
-]
-
-if(!vial || !water){
-result.innerHTML="Please enter vial size and water amount."
-return
-}
-
-let concentration=vial/water
-let remaining=vial
-let text="<b>Concentration:</b> "+concentration.toFixed(2)+" mg/ml<br><br>"
-
-for(let i=0;i<doses.length;i++){
-
-let dose=doses[i]
-
-if(dose===0) continue
-
-let units=(dose/concentration)*100
-
-remaining-=dose
-
-text+="Week "+(i+1)+": "+dose+" mg ("+units.toFixed(1)+" units)<br>"
-text+="Remaining in vial: "+remaining.toFixed(2)+" mg<br><br>"
-
-if(remaining<=0){
-
-text+="⚠️ Vial runs out during week "+(i+1)
-break
-
-}
-
-}
-
-let totalDose=doses.reduce((a,b)=>a+b,0)
-let avgDose=totalDose/doses.filter(x=>x>0).length
-
-let weeks=vial/avgDose
-
-text+="<hr><b>Estimated vial duration:</b> "+weeks.toFixed(1)+" weeks"
-
-document.getElementById("result").innerHTML=text
-
-}
-
-</script>
-
+      if (score <= 2) {
+        grade.innerHTML = '<span class="pill warn">Low Quality Setup</span><br>Too early. Stay patient and avoid mid-range entries.';
+      } else if (score <= 4) {
+        grade.innerHTML = '<span class="pill">Moderate Setup</span><br>Some confluence present. Wait for missing confirmations.';
+      } else {
+        grade.innerHTML = '<span class="pill bull">High-Probability Setup</span><br>Conditions align: execute on pullback and target next liquidity.';
+      }
+    }
+  </script>
 </body>
 </html>
