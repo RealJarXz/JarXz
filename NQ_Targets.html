@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NQ1! — APEX Target Map</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0d1117;color:#e6edf3;font-family:'Courier New',monospace;padding:0;}
+#header{background:#161b22;border-bottom:1px solid #30363d;padding:12px 18px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+#header h1{color:#58a6ff;font-size:15px;font-weight:bold;}
+.hstat{font-size:12px;}.hstat b{font-weight:bold;}
+.bull{color:#3fb950;}.bear{color:#f85149;}.neutral{color:#d29922;}.cyan{color:#58a6ff;}
+#apex-bar{background:#0d1b0d;border-bottom:2px solid #3fb950;padding:8px 18px;display:flex;gap:20px;flex-wrap:wrap;font-size:11px;}
+.apex-item{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.apex-label{color:#8b949e;font-size:9px;text-transform:uppercase;}
+.apex-val{font-weight:bold;font-size:12px;}
+#main{display:grid;grid-template-columns:1fr 340px;height:calc(100vh - 120px);min-height:500px;}
+#chart-wrap{position:relative;border-right:1px solid #30363d;}
+canvas{display:block;width:100%;height:100%;cursor:crosshair;}
+#side{overflow-y:auto;background:#0d1117;padding:14px;}
+#side h2{font-size:11px;color:#8b949e;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.scenario{border-radius:6px;padding:10px;margin-bottom:12px;}
+.scenario.bull-s{background:#3fb95010;border:1px solid #3fb95055;}
+.scenario.bear-s{background:#f8514910;border:1px solid #f8514955;}
+.scenario h3{font-size:12px;font-weight:bold;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.prob-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:bold;}
+.prob-high{background:#3fb950;color:#0d1117;}
+.prob-low{background:#484f58;color:#fff;}
+.target-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #21262d30;font-size:11px;}
+.target-row:last-child{border:none;}
+.t-num{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:bold;flex-shrink:0;}
+.t-bull{background:#3fb950;color:#0d1117;}
+.t-bear{background:#f85149;color:#fff;}
+.t-price{font-size:13px;font-weight:bold;min-width:62px;}
+.t-reason{color:#8b949e;font-size:10px;flex:1;line-height:1.3;}
+.t-pts{font-size:10px;padding:2px 6px;border-radius:4px;white-space:nowrap;margin-left:auto;}
+.pts-bull{background:#3fb95022;color:#3fb950;}
+.pts-bear{background:#f8514922;color:#f85149;}
+.divider{height:1px;background:#30363d;margin:12px 0;}
+.current-box{background:#58a6ff15;border:1px solid #58a6ff55;border-radius:6px;padding:8px;margin-bottom:10px;text-align:center;}
+.current-price{font-size:22px;font-weight:bold;color:#58a6ff;}
+.current-sub{font-size:10px;color:#8b949e;margin-top:2px;}
+.key-level{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:11px;}
+.kl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.kl-price{font-weight:bold;min-width:62px;}
+.kl-label{color:#8b949e;font-size:10px;}
+.verdict{background:#1c2128;border:1px solid #30363d;border-radius:8px;padding:10px;margin-top:10px;}
+.verdict h3{font-size:11px;color:#d29922;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.verdict p{font-size:11px;color:#8b949e;line-height:1.5;}
+#tooltip{position:fixed;background:#161b22ee;border:1px solid #30363d;border-radius:6px;padding:8px 10px;font-size:11px;pointer-events:none;display:none;z-index:100;white-space:nowrap;}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>⚡ NQ1! — APEX TARGET MAP | 15m</h1>
+  <div class="hstat">Price: <b class="bull">29,161.50</b></div>
+  <div class="hstat">Day High: <b class="neutral">29,188.5</b></div>
+  <div class="hstat">Day Low: <b>29,086.5</b></div>
+  <div class="hstat">Open: <b>29,100</b></div>
+  <div class="hstat">Prev SSL: <b class="bull">28,814.75 ✓ swept</b></div>
+</div>
+
+<div id="apex-bar">
+  <div class="apex-item"><span class="apex-label">BIAS</span><span class="apex-val bull">▲▲▲ STRONG BULL (6)</span></div>
+  <div class="apex-item"><span class="apex-label">4H</span><span class="apex-val bull">▲ Bull</span></div>
+  <div class="apex-item"><span class="apex-label">1H</span><span class="apex-val bull">▲ Bull</span></div>
+  <div class="apex-item"><span class="apex-label">Range</span><span class="apex-val">29,188.5 / 28,814.8</span></div>
+  <div class="apex-item"><span class="apex-label">P/D</span><span class="apex-val bear">PREMIUM</span></div>
+  <div class="apex-item"><span class="apex-label">Last Swing</span><span class="apex-val">H 29,419 / L 28,814</span></div>
+  <div class="apex-item"><span class="apex-label">MSS</span><span class="apex-val bull">MSS+ ✓</span></div>
+  <div class="apex-item"><span class="apex-label">Setup</span><span class="apex-val neutral">⏳ WAIT</span></div>
+  <div class="apex-item"><span class="apex-label">Sweep Target</span><span class="apex-val">29,486.75</span></div>
+  <div class="apex-item"><span class="apex-label">4H Target</span><span class="apex-val bull">29,600.25</span></div>
+</div>
+
+<div id="main">
+<div id="chart-wrap"><canvas id="c"></canvas></div>
+
+<div id="side">
+
+  <div class="current-box">
+    <div class="current-price">29,161.50</div>
+    <div class="current-sub">LIVE PRICE · Testing Range Top 29,188.5</div>
+  </div>
+
+  <h2>Scenario A — BULL (High Probability)</h2>
+  <div class="scenario bull-s">
+    <h3><span class="bull">▲ Break above 29,188.5</span><span class="prob-badge prob-high">70% likely</span></h3>
+    <div class="target-row"><div class="t-num t-bull">T1</div><span class="t-price bull">29,274</span><span class="t-reason">BSL1 — first buyside liquidity above, APEX label on chart</span><span class="t-pts pts-bull">+113</span></div>
+    <div class="target-row"><div class="t-num t-bull">T2</div><span class="t-price bull">29,419</span><span class="t-reason">FVG / old BSL from Judas Swing — major magnet, APEX FVG zone</span><span class="t-pts pts-bull">+258</span></div>
+    <div class="target-row"><div class="t-num t-bull">T3</div><span class="t-price bull">29,486</span><span class="t-reason">APEX Sweep target — equal highs cluster</span><span class="t-pts pts-bull">+325</span></div>
+    <div class="target-row"><div class="t-num t-bull">T4</div><span class="t-price bull">29,600</span><span class="t-reason">4H major APEX target — weekly BSL area</span><span class="t-pts pts-bull">+439</span></div>
+    <div class="target-row"><div class="t-num t-bull">T5</div><span class="t-price bull">29,782</span><span class="t-reason">Weekly absolute BSL — May 14 peak, ultimate bull target</span><span class="t-pts pts-bull">+621</span></div>
+  </div>
+
+  <h2>Scenario B — BEAR / Pullback (Lower Probability)</h2>
+  <div class="scenario bear-s">
+    <h3><span class="bear">▼ Rejected at 29,188.5 range top</span><span class="prob-badge prob-low">30% likely</span></h3>
+    <div class="target-row"><div class="t-num t-bear">P1</div><span class="t-price bear">29,100</span><span class="t-reason">Day open — first pullback support / order flow retest</span><span class="t-pts pts-bear">-61</span></div>
+    <div class="target-row"><div class="t-num t-bear">P2</div><span class="t-price bear">29,001</span><span class="t-reason">Equilibrium (range midpoint) — ideal long re-entry zone</span><span class="t-pts pts-bear">-160</span></div>
+    <div class="target-row"><div class="t-num t-bear">P3</div><span class="t-price bear">28,907</span><span class="t-reason">Bullish OB — strong demand zone, likely bounce here</span><span class="t-pts pts-bear">-254</span></div>
+    <div class="target-row"><div class="t-num t-bear">❌</div><span class="t-price bear">28,814</span><span class="t-reason">SSL (swept) — break below = BULL MODEL INVALID, full reassess</span><span class="t-pts pts-bear">STOP</span></div>
+  </div>
+
+  <div class="divider"></div>
+  <h2>All Key Levels</h2>
+  <div class="key-level"><div class="kl-dot" style="background:#f85149"></div><span class="kl-price bear">29,782</span><span class="kl-label">WEEKLY BSL — May 14 absolute peak</span></div>
+  <div class="key-level"><div class="kl-dot" style="background:#f85149"></div><span class="kl-price bear">29,600</span><span class="kl-label">4H APEX target</span></div>
+  <div class="key-level"><div class="kl-dot" style="background:#f85149"></div><span class="kl-price bear">29,486</span><span class="kl-label">APEX sweep target / equal highs</span></div>
+  <div class="key-level"><div class="kl-dot" style="background:#f85149"></div><span class="kl-price bear">29,419</span><span class="kl-label">FVG / Judas Swing BSL — major magnet</span></div>
+  <div class="key-level"><div class="kl-dot" style="background:#f85149"></div><span class="kl-price bear">29,274</span><span class="kl-label">BSL1 — first target above range</span></div>
+  <div class="key-level"><div class="kl-dot" style="background:#d29922"></div><span class="kl-price neutral">29,188</span><span class="kl-label">RANGE TOP / Day High — KEY BREAKOUT LEVEL</span></div>
+  <div class="key-level"><div class="kl-dot" style="background:#58a6ff"></div><span class="kl-price cyan">29,161</span><span class="kl-label">CURRENT PRICE</span></div>
+  <div class="key-level"><div class="kl-dot" style="background:#8b949e"></div><span class="kl-price">29,100</span><span class="kl-label">Day open / pullback support</span></div>
+  <div class="key-level"><div class="kl-dot" style="background:#8b949e"></div><span class="kl-price">29,001</span><span class="kl-label">Equilibrium (range midpoint)</span></div>
+  <div class="key-level"><div class="kl-dot" style="background:#3fb950"></div><span class="kl-price bull">28,907</span><span class="kl-label">Bullish OB — demand zone</span></div>
+  <div class="key-level"><div class="kl-dot" style="background:#3fb950"></div><span class="kl-price bull">28,814</span><span class="kl-label">SSL swept — bull invalidation below</span></div>
+
+  <div class="verdict">
+    <h3>⚡ My Read</h3>
+    <p>
+      APEX shows <b class="bull">STRONG BULL 6/6</b> — both 4H and 1H bullish, SSL swept, MSS+ confirmed, BOS done. The model is fully built for upside.<br><br>
+      Price is testing <b class="neutral">29,188.5</b> (range top) right now. A clean break and hold above this level opens the door to <b class="bull">29,274 → 29,419 → 29,600</b>.<br><br>
+      APEX says <b class="neutral">WAIT</b> because we're at range top in premium — <b>don't buy here</b>. Wait for either:<br>
+      ① <b>Break + retest of 29,188</b> → long targeting 29,419<br>
+      ② <b>Pullback to 29,001 (EQ)</b> → long entry → same targets
+    </p>
+  </div>
+
+</div>
+</div>
+
+<div id="tooltip"></div>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const tt = document.getElementById('tooltip');
+
+const PRICE = 29161.5;
+const RANGE_TOP = 29188.5;
+
+const LEVELS = [
+  {p:29782,label:'WEEKLY BSL',shortL:'WKLY BSL 29,782',color:'#f85149',dash:[6,5],w:1.5,side:'bull'},
+  {p:29600,label:'4H APEX Target',shortL:'4H TGT 29,600',color:'#f85149',dash:[4,4],w:2,side:'bull'},
+  {p:29486,label:'APEX Sweep Target',shortL:'SWEEP 29,486',color:'#f06060',dash:[3,4],w:1.5,side:'bull'},
+  {p:29419,label:'FVG / Old BSL (Judas High)',shortL:'FVG BSL 29,419',color:'#f85149',dash:[],w:2,side:'bull'},
+  {p:29274,label:'BSL1 — First Target',shortL:'BSL1 29,274',color:'#e06060',dash:[3,3],w:1.5,side:'bull'},
+  {p:29188.5,label:'RANGE TOP / Day High ← KEY',shortL:'RANGE TOP 29,188 ←',color:'#d29922',dash:[],w:2.5,side:'key'},
+  {p:29100,label:'Day Open / Support',shortL:'DAY OPEN 29,100',color:'#8b949e',dash:[3,4],w:1,side:'neutral'},
+  {p:29001,label:'Equilibrium — Long Re-entry',shortL:'EQ 29,001',color:'#484f58',dash:[4,4],w:1.5,side:'neutral'},
+  {p:28907,label:'Bullish OB — Demand Zone',shortL:'BULL OB 28,907',color:'#3fb950',dash:[3,3],w:1.5,side:'bear'},
+  {p:28814.75,label:'SSL SWEPT ✓ — Invalidation Below',shortL:'✓ SSL 28,814',color:'#3fb950',dash:[],w:2,side:'bear'},
+];
+
+const PAD = {top:20,right:155,bottom:30,left:65};
+
+function resize(){
+  const wrap = document.getElementById('chart-wrap');
+  canvas.width = wrap.clientWidth;
+  canvas.height = wrap.clientHeight;
+  draw();
+}
+
+function py(p){
+  const mn=28680, mx=29850;
+  return PAD.top + (canvas.height-PAD.top-PAD.bottom)*(1-(p-mn)/(mx-mn));
+}
+
+function draw(){
+  const W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#0d1117';
+  ctx.fillRect(0,0,W,H);
+
+  // grid
+  const gridPrices=[28700,28800,28900,29000,29100,29200,29300,29400,29500,29600,29700,29800];
+  gridPrices.forEach(p=>{
+    const y=py(p);
+    ctx.strokeStyle='#21262d';
+    ctx.lineWidth=1;
+    ctx.setLineDash([1,4]);
+    ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(W-PAD.right,y);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#484f58';
+    ctx.font='10px Courier New';
+    ctx.textAlign='right';
+    ctx.fillText(p.toLocaleString(),PAD.left-4,y+4);
+  });
+
+  // Zone fills
+  const rTop=py(29188.5), rBot=py(29001);
+  ctx.fillStyle='rgba(210,153,34,0.05)';
+  ctx.fillRect(PAD.left,rTop,W-PAD.left-PAD.right,rBot-rTop);
+
+  const obTop=py(28942), obBot=py(28814);
+  ctx.fillStyle='rgba(63,185,80,0.06)';
+  ctx.fillRect(PAD.left,obTop,W-PAD.left-PAD.right,obBot-obTop);
+
+  // Target zones (shaded bands)
+  [[29419,29486,'rgba(248,81,73,0.07)'],[29274,29320,'rgba(248,81,73,0.05)'],[29600,29650,'rgba(248,81,73,0.05)']].forEach(([lo,hi,col])=>{
+    ctx.fillStyle=col;
+    ctx.fillRect(PAD.left,py(hi),W-PAD.left-PAD.right,py(lo)-py(hi));
+  });
+
+  // Arrows showing direction
+  const arrowX = W*0.35;
+  // Bull arrow
+  ctx.strokeStyle='#3fb95044';
+  ctx.lineWidth=3;
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(arrowX,py(PRICE));
+  ctx.lineTo(arrowX,py(29600));
+  ctx.stroke();
+  // arrowhead
+  ctx.fillStyle='#3fb95088';
+  ctx.beginPath();
+  ctx.moveTo(arrowX,py(29620));
+  ctx.lineTo(arrowX-8,py(29580));
+  ctx.lineTo(arrowX+8,py(29580));
+  ctx.closePath();
+  ctx.fill();
+
+  // Bear arrow
+  ctx.strokeStyle='#f8514933';
+  ctx.lineWidth=2;
+  ctx.setLineDash([3,3]);
+  ctx.beginPath();
+  ctx.moveTo(arrowX*0.7,py(PRICE));
+  ctx.lineTo(arrowX*0.7,py(28850));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // T labels along bull path
+  const tTargets=[{p:29274,t:'T1'},{p:29419,t:'T2'},{p:29486,t:'T3'},{p:29600,t:'T4'},{p:29782,t:'T5'}];
+  tTargets.forEach(({p,t})=>{
+    const y=py(p);
+    ctx.fillStyle='#3fb950cc';
+    ctx.beginPath();
+    ctx.arc(arrowX,y,9,0,Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle='#0d1117';
+    ctx.font='bold 9px Courier New';
+    ctx.textAlign='center';
+    ctx.fillText(t,arrowX,y+3);
+  });
+
+  // P labels along bear path
+  const pTargets=[{p:29100,t:'P1'},{p:29001,t:'P2'},{p:28907,t:'P3'}];
+  pTargets.forEach(({p,t})=>{
+    const y=py(p);
+    const bx=arrowX*0.7;
+    ctx.fillStyle='#f85149cc';
+    ctx.beginPath();
+    ctx.arc(bx,y,9,0,Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle='#fff';
+    ctx.font='bold 9px Courier New';
+    ctx.textAlign='center';
+    ctx.fillText(t,bx,y+3);
+  });
+
+  // Draw level lines
+  LEVELS.forEach(lv=>{
+    const y=py(lv.p);
+    ctx.strokeStyle=lv.color;
+    ctx.lineWidth=lv.w;
+    ctx.setLineDash(lv.dash||[]);
+    ctx.beginPath();
+    ctx.moveTo(PAD.left,y);
+    ctx.lineTo(W-PAD.right,y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // right label
+    ctx.fillStyle=lv.color;
+    ctx.font=lv.w>2?'bold 10px Courier New':'10px Courier New';
+    ctx.textAlign='left';
+    ctx.fillText(lv.shortL,W-PAD.right+6,y+4);
+  });
+
+  // KEY LEVEL box at range top
+  const ky=py(29188.5);
+  ctx.fillStyle='rgba(210,153,34,0.15)';
+  ctx.fillRect(PAD.left,ky-1,W-PAD.left-PAD.right,2);
+
+  // Current price
+  const cy=py(PRICE);
+  ctx.strokeStyle='#58a6ff';
+  ctx.lineWidth=2;
+  ctx.setLineDash([3,3]);
+  ctx.beginPath();ctx.moveTo(PAD.left,cy);ctx.lineTo(W-PAD.right,cy);ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle='#58a6ff';
+  ctx.fillRect(W-PAD.right+4,cy-9,100,18);
+  ctx.fillStyle='#0d1117';
+  ctx.font='bold 11px Courier New';
+  ctx.textAlign='left';
+  ctx.fillText('▶ '+PRICE.toLocaleString(),W-PAD.right+8,cy+4);
+
+  ctx.fillStyle='#58a6ff';
+  ctx.fillRect(0,cy-9,PAD.left-2,18);
+  ctx.fillStyle='#0d1117';
+  ctx.font='bold 9px Courier New';
+  ctx.textAlign='right';
+  ctx.fillText(PRICE.toLocaleString(),PAD.left-4,cy+3);
+
+  // Zone text annotations
+  ctx.textAlign='left';
+  ctx.font='9px Courier New';
+  ctx.fillStyle='#d2992266';
+  ctx.fillText('PREMIUM ZONE / RANGE',PAD.left+6,py(29110));
+  ctx.fillStyle='#3fb95066';
+  ctx.fillText('BULLISH OB ZONE',PAD.left+6,py(28860));
+
+  // breakout arrow annotation
+  ctx.fillStyle='#d29922';
+  ctx.font='bold 9px Courier New';
+  ctx.textAlign='center';
+  ctx.fillText('▲ BREAK HERE → BULL TARGETS',W*0.55,py(29200));
+  ctx.fillStyle='#f85149';
+  ctx.fillText('▼ REJECT → PULLBACK TARGETS',W*0.22,py(29155));
+}
+
+window.addEventListener('resize',resize);
+window.addEventListener('load',resize);
+</script>
+</body>
+</html>
