@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>NQ1! — Probable Targets | APEX</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:'Segoe UI',monospace;font-size:12px;height:100vh;overflow:hidden}
+.root{display:grid;grid-template-rows:48px 1fr 36px;height:100vh}
+
+/* HEADER */
+.hdr{background:#161b22;border-bottom:2px solid #21262d;display:flex;align-items:center;gap:12px;padding:0 14px}
+.sym{font-size:16px;font-weight:800;color:#58a6ff}
+.price{font-size:22px;font-weight:800;color:#7ee787}
+.chg{font-size:12px;color:#7ee787;font-weight:600}
+.badge{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.5px}
+.b-on{background:#0d2018;border:1px solid #3fb950;color:#7ee787}
+.b-warn{background:#2d1a00;border:1px solid #d29922;color:#d29922}
+.b-info{background:#0f1c2e;border:1px solid #388bfd;color:#79c0ff}
+.dot-live{width:7px;height:7px;border-radius:50%;background:#3fb950;animation:blink .9s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* MAIN */
+.main{display:grid;grid-template-columns:1fr 300px;min-height:0;overflow:hidden}
+.chart-wrap{position:relative;min-height:0;background:#0d1117}
+canvas{display:block}
+
+/* RIGHT PANEL */
+.panel{background:#0d1117;border-left:1px solid #21262d;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px}
+.sec{background:#161b22;border:1px solid #21262d;border-radius:6px;padding:8px}
+.sec-t{font-size:9px;font-weight:700;letter-spacing:1.5px;color:#6e7681;text-transform:uppercase;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #21262d}
+
+/* TARGET CARDS */
+.tcard{border-radius:5px;padding:7px 8px;margin-bottom:5px;border-left:4px solid}
+.tc-hot{background:#0a1a0a;border-left-color:#3fb950}
+.tc-med{background:#0a1320;border-left-color:#58a6ff}
+.tc-far{background:#14100a;border-left-color:#d29922}
+.tc-ext{background:#1a0a1a;border-left-color:#a371f7}
+.tc-stop{background:#1a0a0a;border-left-color:#f85149}
+.tc-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.tc-tag{font-size:10px;font-weight:800}
+.tc-price{font-size:15px;font-weight:800;font-family:monospace}
+.tc-dist{font-size:9px;color:#6e7681}
+.tc-cond{font-size:9px;color:#8b949e;line-height:1.6;margin-top:3px}
+.tc-cond strong{color:#e6edf3}
+.prob-bar{height:4px;border-radius:2px;background:#21262d;margin-top:5px;overflow:hidden}
+.prob-fill{height:100%;border-radius:2px}
+
+/* MOVEMENT ANALYSIS */
+.mv-row{display:flex;gap:6px;align-items:flex-start;padding:3px 0;border-bottom:1px solid #0d1117}
+.mv-row:last-child{border-bottom:none}
+.mv-icon{font-size:11px;flex-shrink:0;margin-top:1px;width:16px;text-align:center}
+.mv-body{flex:1}
+.mv-title{font-size:10px;font-weight:700}
+.mv-detail{font-size:9px;color:#8b949e;line-height:1.5;margin-top:1px}
+.mv-price{font-size:10px;font-weight:700;font-family:monospace;margin-left:auto;flex-shrink:0}
+.bull{color:#7ee787}.bear{color:#f85149}.neut{color:#d29922}.info{color:#79c0ff}
+
+/* BOTTOM */
+.btm{background:#161b22;border-top:1px solid #21262d;display:flex;align-items:center;gap:16px;padding:0 14px;font-size:10px}
+.bt-sep{color:#21262d;font-size:14px}
+.bt-k{color:#6e7681}
+.bt-v{font-weight:700}
+</style>
+</head>
+<body>
+<div class="root">
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="dot-live"></div>
+  <span class="sym">NQ1!</span>
+  <span class="price">29,554.25</span>
+  <span class="chg">+0.36% &nbsp;|&nbsp; Overnight</span>
+  <span class="badge b-on">BULL STRUCTURE INTACT</span>
+  <span class="badge b-warn">⚡ WEAK HIGH 29,603.50</span>
+  <span class="badge b-info">APEX ULTIMATE v20.1</span>
+  <span style="margin-left:auto;color:#6e7681;font-size:9px">15m · MAY 21–22 · TARGETS MAPPED</span>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- CHART -->
+  <div class="chart-wrap" id="cw"><canvas id="cv"></canvas></div>
+
+  <!-- RIGHT PANEL -->
+  <div class="panel">
+
+    <!-- PROBABLE TARGETS -->
+    <div class="sec">
+      <div class="sec-t">PROBABLE TARGETS — IN ORDER</div>
+
+      <!-- T1: 29,603.50 -->
+      <div class="tcard tc-hot">
+        <div class="tc-head">
+          <span class="tc-tag bull">🔥 IMMEDIATE</span>
+          <span class="tc-price bull">29,603.50</span>
+        </div>
+        <div class="tc-dist bull">+49pts from current &nbsp;|&nbsp; Probability: 85%</div>
+        <div class="tc-cond">
+          <strong>What needs to happen:</strong><br>
+          Sweep overnight Weak High. Need a 15m close ABOVE 29,603.50 with ≥ avg volume. No rejection wicks on approach. London or NY kill zone preferred.
+        </div>
+        <div class="prob-bar"><div class="prob-fill" style="width:85%;background:#3fb950"></div></div>
+      </div>
+
+      <!-- T2: 29,700 -->
+      <div class="tcard tc-med">
+        <div class="tc-head">
+          <span class="tc-tag info">📈 SHORT TERM</span>
+          <span class="tc-price info">29,700</span>
+        </div>
+        <div class="tc-dist info">+146pts from current &nbsp;|&nbsp; Probability: 72%</div>
+        <div class="tc-cond">
+          <strong>What needs to happen:</strong><br>
+          29,603.50 broken + 15m close above it (confirmation). No bearish CHoCH after the sweep. Hold above 29,554 on pullback = bull continuation confirmed.
+        </div>
+        <div class="prob-bar"><div class="prob-fill" style="width:72%;background:#58a6ff"></div></div>
+      </div>
+
+      <!-- T3: 29,782 -->
+      <div class="tcard tc-far">
+        <div class="tc-head">
+          <span class="tc-tag neut">🎯 MAIN TARGET</span>
+          <span class="tc-price neut">29,782</span>
+        </div>
+        <div class="tc-dist neut">+228pts from current &nbsp;|&nbsp; Probability: 65%</div>
+        <div class="tc-cond">
+          <strong>What needs to happen:</strong><br>
+          4H Weak High sweep. Requires 29,700 to break cleanly + displacement candle ≥ 150pts. Strong Low 29,293 must remain protected. Volume must expand on approach.
+        </div>
+        <div class="prob-bar"><div class="prob-fill" style="width:65%;background:#d29922"></div></div>
+      </div>
+
+      <!-- T4: 30,000 -->
+      <div class="tcard tc-ext">
+        <div class="tc-head">
+          <span class="tc-tag" style="color:#d2a8ff">⚡ EXTENSION</span>
+          <span class="tc-price" style="color:#d2a8ff">30,000</span>
+        </div>
+        <div class="tc-dist" style="color:#a371f7">+446pts from current &nbsp;|&nbsp; Probability: 40%</div>
+        <div class="tc-cond">
+          <strong>What needs to happen:</strong><br>
+          29,782 Weak High swept + 4H candle closes above it. Market momentum must carry through with no bearish MSS on 1H. Macro catalyst needed (Fed, earnings, trade deal).
+        </div>
+        <div class="prob-bar"><div class="prob-fill" style="width:40%;background:#a371f7"></div></div>
+      </div>
+
+      <!-- STOP -->
+      <div class="tcard tc-stop">
+        <div class="tc-head">
+          <span class="tc-tag bear">⛔ INVALIDATION</span>
+          <span class="tc-price bear">29,293</span>
+        </div>
+        <div class="tc-dist bear">-261pts &nbsp;|&nbsp; Strong Low — bull thesis broken below</div>
+        <div class="tc-cond">
+          <strong>If this breaks:</strong><br>
+          29,207.75 (+OB) → 29,127 → 29,113. All bull targets off the table until new MSS+ fires. Do NOT hold longs below 29,293 close.
+        </div>
+      </div>
+    </div>
+
+    <!-- MOVEMENT ANALYSIS -->
+    <div class="sec">
+      <div class="sec-t">PRICE MOVEMENT ANALYSIS</div>
+
+      <div class="mv-row">
+        <span class="mv-icon">💀</span>
+        <div class="mv-body">
+          <div class="mv-title bear">SSL SWEEP — 29,113 / 29,127</div>
+          <div class="mv-detail">Massive flush swept +OB (held 4×). MSS+ fired. Classic APEX stop hunt before launch.</div>
+        </div>
+        <span class="mv-price bear">29,113</span>
+      </div>
+
+      <div class="mv-row">
+        <span class="mv-icon">🚀</span>
+        <div class="mv-body">
+          <div class="mv-title bull">DISPLACEMENT UP — +441pts</div>
+          <div class="mv-detail">From 29,113 → 29,554 in single session. 6 targets hit in sequence. Venom Cycle complete.</div>
+        </div>
+        <span class="mv-price bull">29,554</span>
+      </div>
+
+      <div class="mv-row">
+        <span class="mv-icon">📉</span>
+        <div class="mv-body">
+          <div class="mv-title bear">DISTRIBUTION FLUSH — Strong Low</div>
+          <div class="mv-detail">After 29,554 hit, flushed to 29,293.25. Strong Low formed. APEX re-accumulation zone.</div>
+        </div>
+        <span class="mv-price bear">29,293</span>
+      </div>
+
+      <div class="mv-row">
+        <span class="mv-icon">🌙</span>
+        <div class="mv-body">
+          <div class="mv-title bull">OVERNIGHT PUSH — New High</div>
+          <div class="mv-detail">Opened 29,444 overnight → pushed to 29,603.50 (T6 hit). Now consolidating below Weak High.</div>
+        </div>
+        <span class="mv-price bull">29,603</span>
+      </div>
+
+      <div class="mv-row">
+        <span class="mv-icon">⚡</span>
+        <div class="mv-body">
+          <div class="mv-title info">NOW — BELOW WEAK HIGH</div>
+          <div class="mv-detail">29,554 current. 49pts below Weak High 29,603.50. Waiting for sweep + hold to trigger next leg.</div>
+        </div>
+        <span class="mv-price info">29,554</span>
+      </div>
+    </div>
+
+    <!-- KEY CONDITIONS -->
+    <div class="sec">
+      <div class="sec-t">WHAT TO WATCH</div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <div style="background:#0a1a0a;border:1px solid #238636;border-radius:4px;padding:5px 7px;font-size:9px;color:#8b949e;line-height:1.6">
+          <strong class="bull">BULL TRIGGER:</strong> 15m close above <strong style="color:#e6edf3">29,603.50</strong> → immediate targets 29,700 → 29,782
+        </div>
+        <div style="background:#1a1a0a;border:1px solid #d29922;border-radius:4px;padding:5px 7px;font-size:9px;color:#8b949e;line-height:1.6">
+          <strong class="neut">CAUTION ZONE:</strong> Rejection at 29,603.50 with bearish engulf → pullback to <strong style="color:#e6edf3">29,440–29,490</strong> OB for re-entry
+        </div>
+        <div style="background:#1a0a0a;border:1px solid #b91c1c;border-radius:4px;padding:5px 7px;font-size:9px;color:#8b949e;line-height:1.6">
+          <strong class="bear">BEAR TRIGGER:</strong> 15m close below <strong style="color:#e6edf3">29,293</strong> Strong Low → bull structure breaks, all targets invalid
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:8px;color:#3d444d;padding:2px">APEX Ultimate v20.1 · CME NQ1! · May 22 2026 · Overnight Session</div>
+  </div>
+</div>
+
+<!-- BOTTOM -->
+<div class="btm">
+  <span class="bt-k">LIVE</span><span class="bt-v bull">29,554.25</span>
+  <span class="bt-sep">|</span>
+  <span class="bt-k">SESSION HIGH</span><span class="bt-v bull">29,603.50</span>
+  <span class="bt-sep">|</span>
+  <span class="bt-k">STRONG LOW</span><span class="bt-v bear">29,293.25</span>
+  <span class="bt-sep">|</span>
+  <span class="bt-k">T1</span><span class="bt-v bull">29,603.50</span>
+  <span class="bt-sep">|</span>
+  <span class="bt-k">T2</span><span class="bt-v bull">29,700</span>
+  <span class="bt-sep">|</span>
+  <span class="bt-k">T3 🎯</span><span class="bt-v neut">29,782</span>
+  <span class="bt-sep">|</span>
+  <span class="bt-k">EXT</span><span class="bt-v" style="color:#a371f7">30,000</span>
+  <span class="bt-sep">|</span>
+  <span class="bt-k">STOP</span><span class="bt-v bear">29,293</span>
+</div>
+</div>
+
+<script>
+// 15m bars — 30 bars covering May 21 session + overnight extension
+const BARS = [
+  [29243,29277.75,29243,29253.25],
+  [29252.75,29268,29224.25,29238.5],
+  [29238,29262,29219.5,29241.75],
+  [29244.25,29292.75,29221,29236.25],
+  [29237,29244,29185.5,29194],       // dip to 29,185
+  [29193.5,29244,29188,29215.75],
+  [29213.5,29221.25,29180,29215.5],
+  [29217.25,29268.5,29174,29214],    // low 29,174
+  [29216.25,29315,29188,29288.25],   // recovery starts
+  [29287.5,29340,29251.25,29267],
+  [29267,29276.75,29127,29190],      // SSL SWEEP 29,127
+  [29189.25,29255.75,29175.75,29236],
+  [29234.5,29253.5,29166,29235.75],  // low 29,166
+  [29235.5,29249.25,29139,29233],    // low 29,139
+  [29233,29263.5,29219.5,29234.75],
+  [29234.5,29274.75,29175.5,29258],
+  [29257.5,29304.5,29257,29266.25],
+  [29267,29310.5,29263,29275.25],
+  [29274.75,29282.5,29215.25,29247.75],
+  [29247.25,29273.75,29232,29254.5],
+  [29256.25,29270,29207.75,29257.75], // +OB test 29,207.75
+  [29258.75,29382,29258.25,29343.25], // BIG RECOVERY
+  [29344.5,29478.25,29335.25,29412.75],// +133pt displacement
+  [29412.5,29496.25,29407.25,29493],  // above T5
+  [29493.75,29554,29470,29497.25],    // T6 HIT 29,554
+  [29497,29521.5,29445,29450.75],     // pullback
+  [29451.75,29478,29428,29459],
+  [29459.75,29469.5,29435,29457.5],
+  [29456.25,29465.75,29293.25,29337], // FLUSH to Strong Low 29,293
+  [29338.5,29413,29335.25,29412.25],  // recovery
+  // Overnight synthetic bars
+  [29412,29460,29400,29444],          // overnight open area
+  [29444,29520,29440,29500],
+  [29500,29603.5,29498,29554.25],     // OVERNIGHT HIGH 29,603.50
+];
+
+// Key levels to draw
+const LEVELS = [
+  { p:30000,  label:'EXT · 30,000',        c:'#a371f7', dash:[4,4], lw:1, side:'right' },
+  { p:29782,  label:'🎯 T3 · Weak High 4H', c:'#d29922', dash:[5,3], lw:2, side:'right' },
+  { p:29700,  label:'T2 · 29,700',          c:'#58a6ff', dash:[5,3], lw:1.5, side:'right' },
+  { p:29603.5,label:'⚡T1 · Weak High',     c:'#3fb950', dash:[4,3], lw:2,   side:'right' },
+  { p:29554.25,label:'▶ NOW',               c:'#7ee787', dash:[],    lw:2,   side:'right' },
+  { p:29490,  label:'OB Re-entry',          c:'#388bfd', dash:[3,3], lw:1,   side:'right' },
+  { p:29440,  label:'OB Support',           c:'#388bfd', dash:[3,3], lw:1,   side:'right' },
+  { p:29293.25,label:'⛔ Strong Low / STOP', c:'#f85149', dash:[3,2], lw:2,   side:'right' },
+  { p:29207.75,label:'+OB Support',         c:'#388bfd', dash:[4,3], lw:1,   side:'right' },
+  { p:29127,  label:'SSL / OB Deep',        c:'#6e7681', dash:[2,3], lw:1,   side:'right' },
+];
+
+// Annotation events
+const EVENTS = [
+  { bar:10, label:'SSL\nSWEEP', above:false, c:'#f85149' },
+  { bar:20, label:'+OB\nTEST',  above:false, c:'#388bfd' },
+  { bar:21, label:'MSS+\nLAUNCH', above:true, c:'#3fb950' },
+  { bar:24, label:'T6\nHIT',    above:true,  c:'#3fb950' },
+  { bar:28, label:'STRONG\nLOW', above:false, c:'#f85149' },
+  { bar:32, label:'NEW\nHIGH',  above:true,  c:'#d29922' },
+];
+
+function draw() {
+  const cw = document.getElementById('cw');
+  const cv = document.getElementById('cv');
+  const W = cw.clientWidth, H = cw.clientHeight;
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+
+  const PAD = { t:18, r:180, b:30, l:8 };
+  const pw = W - PAD.l - PAD.r;
+  const ph = H - PAD.t - PAD.b;
+
+  // price range
+  const pMin = 29050;
+  const pMax = 30080;
+  const pRange = pMax - pMin;
+  const pY = p => PAD.t + (1-(p-pMin)/pRange)*ph;
+
+  const barStep = pw / BARS.length;
+  const barW = Math.max(3, barStep * 0.72);
+
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0,0,W,H);
+
+  // Grid
+  ctx.setLineDash([1,5]); ctx.strokeStyle='#1c2128'; ctx.lineWidth=1;
+  for(let p=29100; p<=30100; p+=100){
+    if(p<pMin||p>pMax) continue;
+    const y = pY(p);
+    ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(W-PAD.r+2,y); ctx.stroke();
+    ctx.fillStyle='#2d333b'; ctx.font='9px monospace'; ctx.textAlign='left';
+    ctx.fillText(p.toLocaleString(), W-PAD.r+4, y+3);
+  }
+  ctx.setLineDash([]);
+
+  // Zone shading
+  // Target zone (29,603 - 29,782)
+  ctx.fillStyle='rgba(210,153,34,0.05)';
+  ctx.fillRect(PAD.l, pY(29782), pw, pY(29603.5)-pY(29782));
+  // OB re-entry zone
+  ctx.fillStyle='rgba(56,139,253,0.06)';
+  ctx.fillRect(PAD.l, pY(29490), pw, pY(29440)-pY(29490));
+  // Strong Low zone
+  ctx.fillStyle='rgba(248,81,73,0.06)';
+  ctx.fillRect(PAD.l, pY(29310), pw, pY(29270)-pY(29310));
+  // 30,000 zone
+  ctx.fillStyle='rgba(163,113,247,0.04)';
+  ctx.fillRect(PAD.l, pY(30050), pw, pY(29950)-pY(30050));
+
+  // Overnight separator
+  const onX = PAD.l + 30*barStep;
+  ctx.strokeStyle='rgba(56,139,253,0.3)'; ctx.lineWidth=1; ctx.setLineDash([5,5]);
+  ctx.beginPath(); ctx.moveTo(onX, PAD.t); ctx.lineTo(onX, PAD.t+ph); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(56,139,253,0.4)'; ctx.font='bold 9px monospace'; ctx.textAlign='left';
+  ctx.fillText('OVERNIGHT →', onX+3, PAD.t+12);
+
+  // Draw horizontal levels
+  for(const lv of LEVELS){
+    if(lv.p < pMin || lv.p > pMax) continue;
+    const y = pY(lv.p);
+    ctx.setLineDash(lv.dash.length ? lv.dash : []);
+    ctx.strokeStyle = lv.c; ctx.lineWidth = lv.lw;
+    ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(W-PAD.r-2, y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = lv.c; ctx.font='bold 9px monospace'; ctx.textAlign='left';
+    ctx.fillText(`${lv.p.toLocaleString('en',{minimumFractionDigits:lv.p%1?2:0})}  ${lv.label}`, W-PAD.r+2, y+3);
+  }
+
+  // Draw candles
+  for(let i=0; i<BARS.length; i++){
+    const [open,high,low,close] = BARS[i];
+    const x = PAD.l + i*barStep + barStep/2;
+    const isOvernight = i >= 30;
+    const bull = close >= open;
+    const alpha = isOvernight ? 0.65 : 1;
+    const cB = bull ? `rgba(63,185,80,${alpha})` : `rgba(248,81,73,${alpha})`;
+    const cS = bull ? `rgba(35,134,54,${alpha})` : `rgba(185,28,28,${alpha})`;
+
+    ctx.strokeStyle=cB; ctx.lineWidth=1; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(x,pY(high)); ctx.lineTo(x,pY(low)); ctx.stroke();
+
+    const bT=pY(Math.max(open,close)), bB=pY(Math.min(open,close));
+    const bH=Math.max(1.5,bB-bT);
+    ctx.fillStyle=cB; ctx.fillRect(x-barW/2,bT,barW,bH);
+    ctx.strokeStyle=cS; ctx.lineWidth=.5; ctx.strokeRect(x-barW/2,bT,barW,bH);
+  }
+
+  // Annotations
+  for(const ev of EVENTS){
+    if(ev.bar >= BARS.length) continue;
+    const [open,high,low,close] = BARS[ev.bar];
+    const x = PAD.l + ev.bar*barStep + barStep/2;
+    const y = ev.above ? pY(high)-12 : pY(low)+14;
+    ctx.fillStyle = ev.c;
+    ctx.font='bold 8px monospace';
+    ctx.textAlign='center';
+    const lines = ev.label.split('\n');
+    lines.forEach((line,i) => ctx.fillText(line, x, y + i*10));
+    // Arrow
+    const arrY = ev.above ? pY(high)-4 : pY(low)+3;
+    ctx.beginPath(); ctx.arc(x, arrY, 3, 0, Math.PI*2); ctx.fill();
+  }
+
+  // Current price highlight
+  const cpY = pY(29554.25);
+  ctx.fillStyle='rgba(20,60,20,0.9)';
+  ctx.fillRect(PAD.l, cpY-8, 150, 16);
+  ctx.strokeStyle='#3fb950'; ctx.lineWidth=1; ctx.setLineDash([]);
+  ctx.strokeRect(PAD.l, cpY-8, 150, 16);
+  ctx.fillStyle='#7ee787'; ctx.font='bold 11px monospace'; ctx.textAlign='left';
+  ctx.fillText('▶ LIVE  29,554.25', PAD.l+4, cpY+4);
+
+  // Target arrows from current price (right side projected)
+  const lastBarX = PAD.l + (BARS.length-0.5)*barStep;
+  const targets = [
+    {p:29603.5, c:'#3fb950', l:'T1 →'},
+    {p:29700,   c:'#58a6ff', l:'T2 →'},
+    {p:29782,   c:'#d29922', l:'T3 🎯'},
+    {p:30000,   c:'#a371f7', l:'EXT'},
+  ];
+  targets.forEach(t => {
+    if(t.p < pMin || t.p > pMax) return;
+    const ty = pY(t.p);
+    ctx.strokeStyle=t.c+'70'; ctx.lineWidth=1.5; ctx.setLineDash([4,4]);
+    ctx.beginPath();
+    ctx.moveTo(lastBarX, cpY);
+    ctx.lineTo(lastBarX+35, ty);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=t.c; ctx.beginPath(); ctx.arc(lastBarX+35,ty,4,0,Math.PI*2); ctx.fill();
+    ctx.font='bold 10px monospace'; ctx.textAlign='left';
+    ctx.fillText(t.l, lastBarX+42, ty+3);
+  });
+
+  // STOP arrow
+  const stopY = pY(29293.25);
+  ctx.strokeStyle='#f8514970'; ctx.lineWidth=1.5; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(lastBarX, cpY); ctx.lineTo(lastBarX+35, stopY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='#f85149'; ctx.beginPath(); ctx.arc(lastBarX+35, stopY, 4, 0, Math.PI*2); ctx.fill();
+  ctx.font='bold 10px monospace'; ctx.textAlign='left';
+  ctx.fillText('⛔ STOP', lastBarX+42, stopY+3);
+
+  // Bar count labels at bottom
+  ctx.fillStyle='#3d444d'; ctx.font='8px monospace'; ctx.textAlign='center';
+  [[0,'May 21\nOpen'],[10,'SSL\nSweep'],[21,'Launch'],[24,'T6'],[28,'Strong\nLow'],[32,'Overnight']].forEach(([bi,lbl])=>{
+    if(bi>=BARS.length) return;
+    const x = PAD.l + bi*barStep + barStep/2;
+    lbl.split('\n').forEach((line,i) => ctx.fillText(line, x, H-PAD.b+10+i*8));
+  });
+
+  // Legend
+  ctx.fillStyle='rgba(13,17,23,0.9)';
+  ctx.fillRect(PAD.l+4, PAD.t+4, 180, 68);
+  ctx.strokeStyle='#21262d'; ctx.lineWidth=1; ctx.setLineDash([]);
+  ctx.strokeRect(PAD.l+4, PAD.t+4, 180, 68);
+  const legItems=[
+    {c:'#3fb950',l:'T1 — Weak High sweep (85%)'},
+    {c:'#58a6ff',l:'T2 — 29,700 (72%)'},
+    {c:'#d29922',l:'T3 — 29,782 4H WH (65%)'},
+    {c:'#a371f7',l:'EXT — 30,000 (40%)'},
+    {c:'#f85149',l:'⛔ STOP — 29,293 Strong Low'},
+  ];
+  legItems.forEach((it,i)=>{
+    ctx.fillStyle=it.c; ctx.fillRect(PAD.l+8, PAD.t+8+i*12, 8, 8);
+    ctx.fillStyle='#8b949e'; ctx.font='8px monospace'; ctx.textAlign='left';
+    ctx.fillText(it.l, PAD.l+20, PAD.t+15+i*12);
+  });
+}
+
+window.addEventListener('resize', draw);
+draw();
+</script>
+</body>
+</html>
