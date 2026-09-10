@@ -1,0 +1,8 @@
+{
+  "_comment": "Use this config in Claude Code web settings (iPhone / any browser) after deploying tradingview-mcp to Railway or Render. Replace the URL with your actual deployment URL.",
+  "mcpServers": {
+    "tradingview": {
+      "url": "https://YOUR-APP.railway.app/sse"
+    }
+  }
+}

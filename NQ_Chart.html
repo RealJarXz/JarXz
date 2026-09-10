@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NQ1! — APEX Live Chart</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0d1117; color: #e6edf3; font-family: 'Courier New', monospace; overflow-x: hidden; }
+#header { background: #161b22; border-bottom: 1px solid #30363d; padding: 10px 16px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+#header h1 { color: #58a6ff; font-size: 15px; }
+.stat { font-size: 12px; }
+.stat span { font-weight: bold; }
+.bear { color: #f85149; }
+.bull { color: #3fb950; }
+.neutral { color: #d29922; }
+#chart-wrap { position: relative; width: 100%; }
+#mainCanvas { display: block; width: 100%; cursor: crosshair; }
+#legend { background: #161b22; border-top: 1px solid #30363d; padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 10px; }
+.leg-item { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+.leg-line { width: 28px; height: 2px; }
+.leg-dot { width: 10px; height: 10px; border-radius: 50%; }
+#tooltip { position: absolute; background: #161b22dd; border: 1px solid #30363d; border-radius: 6px; padding: 8px 10px; font-size: 11px; pointer-events: none; display: none; white-space: nowrap; z-index: 10; }
+#levels-panel { background: #161b22; border-top: 1px solid #30363d; padding: 12px 16px; }
+#levels-panel h2 { font-size: 12px; color: #8b949e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.levels-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 6px; }
+.lv { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 4px; font-size: 11px; border-left: 3px solid; }
+.lv.res { background: rgba(248,81,73,0.1); border-color: #f85149; }
+.lv.sup { background: rgba(63,185,80,0.1); border-color: #3fb950; }
+.lv.fvg { background: rgba(210,153,34,0.1); border-color: #d29922; }
+.lv.cur { background: rgba(88,166,255,0.15); border-color: #58a6ff; }
+.lv.piv { background: rgba(139,148,158,0.1); border-color: #8b949e; }
+.lv-price { font-size: 13px; font-weight: bold; min-width: 68px; }
+.lv-label { flex: 1; }
+.lv-tag { font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: bold; margin-left: auto; white-space: nowrap; }
+.tag-r { background: #f85149; color: #fff; }
+.tag-s { background: #3fb950; color: #0d1117; }
+.tag-f { background: #d29922; color: #0d1117; }
+.tag-e { background: #58a6ff; color: #0d1117; }
+.tag-p { background: #484f58; color: #fff; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <h1>⚡ NQ1! CME FUTURES — APEX LIVE CHART (5m)</h1>
+  <div class="stat">Price: <span class="bear" id="hprice">29,018</span></div>
+  <div class="stat">Open: <span id="hopen">29,135</span></div>
+  <div class="stat">High: <span class="bear" id="hhigh">29,419.75</span></div>
+  <div class="stat">Low: <span class="bull" id="hlow">28,842.50</span></div>
+  <div class="stat">PDC: <span id="hpdc">29,231.75</span></div>
+  <div class="stat">Chg: <span class="bear" id="hchp">-0.73%</span></div>
+  <div class="stat" style="margin-left:auto;color:#8b949e;font-size:10px">Live via TradingView WebSocket</div>
+</div>
+
+<div id="chart-wrap">
+  <canvas id="mainCanvas"></canvas>
+  <div id="tooltip"></div>
+</div>
+
+<div id="levels-panel">
+  <h2>Target Levels — All Marked on Chart</h2>
+  <div class="levels-grid">
+    <div class="lv res"><span class="lv-price bear">29,782</span><span class="lv-label">May 14 WEEKLY HIGH — absolute BSL peak, final upside target</span><span class="lv-tag tag-r">MAJOR BSL</span></div>
+    <div class="lv res"><span class="lv-price bear">29,600</span><span class="lv-label">May 15 equal highs — next BSL cluster above</span><span class="lv-tag tag-r">BSL T4</span></div>
+    <div class="lv res"><span class="lv-price bear">29,486</span><span class="lv-label">May 15 session high — weak high, BSL above current</span><span class="lv-tag tag-r">BSL T3</span></div>
+    <div class="lv res"><span class="lv-price bear">29,419</span><span class="lv-label">Today's Judas Swing HIGH — BSL swept, now resistance</span><span class="lv-tag tag-r">SWEPT BSL</span></div>
+    <div class="lv res"><span class="lv-price bear">29,299</span><span class="lv-label">Prev 4H close — upper FVG boundary, key resistance</span><span class="lv-tag tag-r">4H RESIST</span></div>
+    <div class="lv fvg"><span class="lv-price neutral">29,135</span><span class="lv-label">Day open / equilibrium — SHORT ENTRY if rejected here</span><span class="lv-tag tag-f">FVG TOP</span></div>
+    <div class="lv fvg"><span class="lv-price neutral">29,082</span><span class="lv-label">Bearish FVG bottom — primary short entry zone, watch for CHoCH rejection</span><span class="lv-tag tag-f">FVG BOT</span></div>
+    <div class="lv cur"><span class="lv-price" style="color:#58a6ff">29,018</span><span class="lv-label">CURRENT PRICE — compression range 28,960–29,045</span><span class="lv-tag tag-e">NOW</span></div>
+    <div class="lv piv"><span class="lv-price neutral">29,045</span><span class="lv-label">Range high — break above = momentum to FVG zone</span><span class="lv-tag tag-p">RANGE H</span></div>
+    <div class="lv piv"><span class="lv-price neutral">28,960</span><span class="lv-label">Range low — break below = bear resumes to OB</span><span class="lv-tag tag-p">RANGE L</span></div>
+    <div class="lv sup"><span class="lv-price bull">28,907</span><span class="lv-label">Bullish OB — reaction low, buy zone after SSL sweep</span><span class="lv-tag tag-s">OB T1</span></div>
+    <div class="lv sup"><span class="lv-price bull">28,842</span><span class="lv-label">Today's SESSION LOW — SSL swept here, key support</span><span class="lv-tag tag-s">SWEPT SSL</span></div>
+    <div class="lv sup"><span class="lv-price bull">28,742</span><span class="lv-label">May 12 SSL — major support / downside target T3 if 28,842 breaks</span><span class="lv-tag tag-s">MAJOR SSL</span></div>
+    <div class="lv sup"><span class="lv-price bull">28,500</span><span class="lv-label">Round number — macro demand / extended bear target</span><span class="lv-tag tag-s">TARGET T4</span></div>
+  </div>
+</div>
+
+<div id="legend">
+  <div class="leg-item"><div class="leg-line" style="background:#f85149"></div><span class="bear">Resistance / BSL</span></div>
+  <div class="leg-item"><div class="leg-line" style="background:#3fb950"></div><span class="bull">Support / SSL</span></div>
+  <div class="leg-item"><div class="leg-line" style="background:#d29922;height:3px"></div><span class="neutral">FVG / Entry Zone</span></div>
+  <div class="leg-item"><div class="leg-line" style="background:#58a6ff;height:3px"></div><span style="color:#58a6ff">Current Price</span></div>
+  <div class="leg-item"><div class="leg-line" style="background:#484f58"></div><span style="color:#8b949e">Range / Pivot</span></div>
+  <div class="leg-item"><div class="leg-dot" style="background:#3fb950"></div><span class="bull">Bullish candle</span></div>
+  <div class="leg-item"><div class="leg-dot" style="background:#f85149"></div><span class="bear">Bearish candle</span></div>
+</div>
+
+<script>
+const bars = [{"t":1779127200,"o":29014.25,"h":29018.75,"l":29012,"c":29017,"v":110},{"t":1779126900,"o":29007.25,"h":29023,"l":28991.75,"c":29014,"v":2552},{"t":1779126600,"o":28981.5,"h":29021.25,"l":28977.25,"c":29006,"v":3478},{"t":1779126300,"o":29011.75,"h":29016.75,"l":28972,"c":28981.75,"v":3948},{"t":1779126000,"o":28975.75,"h":29029.75,"l":28971,"c":29011.25,"v":4272},{"t":1779125700,"o":28985,"h":28987.75,"l":28959.75,"c":28976.25,"v":3563},{"t":1779125400,"o":29009.75,"h":29015.25,"l":28971.25,"c":28983.75,"v":3592},{"t":1779125100,"o":28978.5,"h":29013.75,"l":28966.25,"c":29009.5,"v":3306},{"t":1779124800,"o":29008,"h":29012.75,"l":28966.25,"c":28977.5,"v":3236},{"t":1779124500,"o":28995,"h":29017.25,"l":28984.5,"c":29007.75,"v":2826},{"t":1779124200,"o":29015.75,"h":29038,"l":28995,"c":28995.75,"v":2961},{"t":1779123900,"o":29007.75,"h":29036.5,"l":28996.75,"c":29015.5,"v":4513},{"t":1779123600,"o":29004.75,"h":29017.25,"l":28966.75,"c":29008,"v":5873},{"t":1779123300,"o":29020.5,"h":29045.5,"l":28995,"c":29006,"v":6451},{"t":1779123000,"o":28931,"h":29022.25,"l":28926.5,"c":29020.25,"v":7291},{"t":1779122700,"o":28921.75,"h":28939.5,"l":28907.75,"c":28931.25,"v":3900},{"t":1779122400,"o":28939.5,"h":28947.5,"l":28916.5,"c":28922.75,"v":3901},{"t":1779122100,"o":28909,"h":28961.5,"l":28899.25,"c":28938.75,"v":5794},{"t":1779121800,"o":28877.75,"h":28940,"l":28842.5,"c":28909,"v":9808},{"t":1779121500,"o":28994.75,"h":28999.25,"l":28859.25,"c":28878.5,"v":12636},{"t":1779121200,"o":29029,"h":29074,"l":28974.75,"c":28993.75,"v":8617},{"t":1779120900,"o":29026.5,"h":29043,"l":29016.75,"c":29029,"v":3904},{"t":1779120600,"o":28995.5,"h":29030,"l":28990,"c":29027.5,"v":4145},{"t":1779120300,"o":28971,"h":29007.25,"l":28963.5,"c":28993.5,"v":4580},{"t":1779120000,"o":28996.25,"h":29008.75,"l":28951.75,"c":28971.5,"v":5193},{"t":1779119700,"o":29029,"h":29046.5,"l":28987.25,"c":28997.25,"v":4470},{"t":1779119400,"o":29011,"h":29038,"l":28978.5,"c":29028.5,"v":4417},{"t":1779119100,"o":28999.75,"h":29041.25,"l":28992,"c":29010.25,"v":4015},{"t":1779118800,"o":29027,"h":29060.5,"l":28998.5,"c":29000.75,"v":5233},{"t":1779118500,"o":29012.75,"h":29065.25,"l":29008.25,"c":29027,"v":6585},{"t":1779118200,"o":28960.25,"h":29015.75,"l":28941.5,"c":29011.75,"v":7884},{"t":1779117900,"o":29006.75,"h":29046,"l":28956.25,"c":28960.75,"v":7722},{"t":1779117600,"o":29008.25,"h":29029,"l":28980.5,"c":29007.5,"v":6611},{"t":1779117300,"o":29066,"h":29069.75,"l":28993.5,"c":29007.75,"v":5621},{"t":1779117000,"o":29018.5,"h":29087.5,"l":29006,"c":29065.75,"v":6813},{"t":1779116700,"o":29071.5,"h":29085,"l":29015.5,"c":29018.5,"v":6113},{"t":1779116400,"o":29082.25,"h":29126.25,"l":29036,"c":29073.25,"v":11640},{"t":1779116100,"o":29057.25,"h":29101.75,"l":29047,"c":29082.5,"v":6311},{"t":1779115800,"o":29017.75,"h":29109,"l":29003.5,"c":29058.75,"v":9041},{"t":1779115500,"o":29087.75,"h":29096.75,"l":29002.5,"c":29018,"v":9818},{"t":1779115200,"o":29059.25,"h":29121.75,"l":29013.25,"c":29087.75,"v":10835},{"t":1779114900,"o":29024.5,"h":29077.75,"l":28970.75,"c":29059.75,"v":14394},{"t":1779114600,"o":29154,"h":29175.75,"l":29012.75,"c":29024.5,"v":14618},{"t":1779114300,"o":29204.75,"h":29231.75,"l":29137.25,"c":29153.25,"v":8775},{"t":1779114000,"o":29251.25,"h":29265.75,"l":29198,"c":29205.5,"v":7400},{"t":1779113700,"o":29259.25,"h":29299,"l":29205,"c":29252,"v":8968},{"t":1779113400,"o":29250,"h":29272,"l":29217.75,"c":29261.5,"v":9338},{"t":1779113100,"o":29161.25,"h":29257.5,"l":29129,"c":29250.5,"v":11971},{"t":1779112800,"o":29242.5,"h":29243,"l":29140.5,"c":29161,"v":13613},{"t":1779112500,"o":29273,"h":29308.75,"l":29228,"c":29243.75,"v":11349},{"t":1779112200,"o":29158.5,"h":29278,"l":29157,"c":29272.5,"v":13043},{"t":1779111900,"o":29167.5,"h":29206,"l":29135,"c":29158.5,"v":16214},{"t":1779111600,"o":29263.5,"h":29282.75,"l":29160,"c":29166.5,"v":15069},{"t":1779111300,"o":29288,"h":29301.75,"l":29240,"c":29263,"v":11898},{"t":1779111000,"o":29338.5,"h":29356.25,"l":29276.25,"c":29288.25,"v":20422},{"t":1779110700,"o":29375,"h":29381.25,"l":29333.75,"c":29338,"v":4878},{"t":1779110400,"o":29363,"h":29375.25,"l":29356.25,"c":29374.5,"v":1452},{"t":1779110100,"o":29378.5,"h":29380.5,"l":29352.5,"c":29363.25,"v":2043},{"t":1779109800,"o":29376.5,"h":29389.75,"l":29365.5,"c":29378.75,"v":2162},{"t":1779109500,"o":29378.75,"h":29399.5,"l":29359.5,"c":29376.75,"v":2584},{"t":1779109200,"o":29408.25,"h":29419,"l":29353,"c":29378.5,"v":6446},{"t":1779108900,"o":29394,"h":29419.75,"l":29373.5,"c":29408,"v":3868},{"t":1779108600,"o":29389.25,"h":29405.75,"l":29372,"c":29393.25,"v":5332},{"t":1779108300,"o":29318.25,"h":29399,"l":29313,"c":29388.75,"v":7285},{"t":1779108000,"o":29268,"h":29324.25,"l":29260.5,"c":29318.5,"v":4313},{"t":1779107700,"o":29244.5,"h":29288,"l":29243.25,"c":29268,"v":3404},{"t":1779107400,"o":29201.75,"h":29246.75,"l":29187,"c":29244.25,"v":1922},{"t":1779107100,"o":29215,"h":29216.25,"l":29196.25,"c":29201.5,"v":674},{"t":1779106800,"o":29190,"h":29220,"l":29189.5,"c":29215,"v":1029},{"t":1779106500,"o":29218.25,"h":29222,"l":29186.25,"c":29193,"v":1747},{"t":1779106200,"o":29224.25,"h":29238.25,"l":29208.75,"c":29219.5,"v":1231},{"t":1779105900,"o":29194.75,"h":29235,"l":29194.75,"c":29224.25,"v":1708},{"t":1779105600,"o":29178.75,"h":29198,"l":29171.75,"c":29194.5,"v":1294},{"t":1779105300,"o":29178.75,"h":29193.75,"l":29158,"c":29177.5,"v":1693},{"t":1779105000,"o":29197.25,"h":29198,"l":29175.5,"c":29180,"v":1086},{"t":1779104700,"o":29241,"h":29242.25,"l":29185.75,"c":29197.25,"v":1968},{"t":1779104400,"o":29214.5,"h":29274.25,"l":29213.5,"c":29237.75,"v":5667},{"t":1779104100,"o":29142.25,"h":29218,"l":29117.75,"c":29214.75,"v":3734},{"t":1779103800,"o":29090,"h":29146,"l":29087.5,"c":29140,"v":3146},{"t":1779103500,"o":29109,"h":29116,"l":29085.75,"c":29090.25,"v":695}];
+
+const LEVELS = [
+  { p: 29782, label: 'WEEKLY BSL — May 14 Peak', shortLabel: 'WKLY BSL 29,782', color: '#f85149', dash: [6,4], w: 2 },
+  { p: 29600, label: 'Equal Highs BSL — May 15', shortLabel: 'EQ HI 29,600', color: '#f85149', dash: [4,4], w: 1.5 },
+  { p: 29486, label: 'Weak High BSL — May 15', shortLabel: 'WEAK HI 29,486', color: '#e8736f', dash: [3,4], w: 1 },
+  { p: 29419.75, label: 'TODAY BSL SWEPT ✗ — Judas Swing High', shortLabel: '✗ BSL 29,419', color: '#f85149', dash: [], w: 2 },
+  { p: 29299, label: '4H Close — FVG Top', shortLabel: '4H FVG 29,299', color: '#f85149', dash: [3,3], w: 1 },
+  { p: 29231.75, label: 'Prev Day Close (PDC)', shortLabel: 'PDC 29,231', color: '#8b949e', dash: [4,4], w: 1 },
+  { p: 29135, label: 'Day Open / Equilibrium — FVG Entry', shortLabel: 'DAY OPEN 29,135', color: '#d29922', dash: [], w: 2.5, isFvg: true },
+  { p: 29082, label: 'Bearish FVG Bottom — Short Entry Zone', shortLabel: 'BFVG 29,082', color: '#d29922', dash: [2,3], w: 2, isFvg: true },
+  { p: 29045, label: 'Range High — Break = momentum up', shortLabel: 'RANGE H 29,045', color: '#484f58', dash: [3,3], w: 1.5 },
+  { p: 28960, label: 'Range Low — Break = bear resumes', shortLabel: 'RANGE L 28,960', color: '#484f58', dash: [3,3], w: 1.5 },
+  { p: 28907, label: 'Bullish OB — Buy Zone after SSL', shortLabel: 'OB 28,907', color: '#3fb950', dash: [3,3], w: 1.5 },
+  { p: 28842.5, label: 'TODAY SSL SWEPT ✓ — Session Low', shortLabel: '✓ SSL 28,842', color: '#3fb950', dash: [], w: 2 },
+  { p: 28742, label: 'May 12 Major SSL — Bear T3', shortLabel: 'MAJOR SSL 28,742', color: '#3fb950', dash: [4,4], w: 2 },
+  { p: 28500, label: 'Round Number — Extended Bear Target', shortLabel: 'RND 28,500', color: '#3fb95088', dash: [4,6], w: 1 },
+];
+
+const CURRENT_PRICE = 29018.75;
+
+const canvas = document.getElementById('mainCanvas');
+const ctx = canvas.getContext('2d');
+const tooltip = document.getElementById('tooltip');
+
+const PADDING = { top: 30, right: 160, bottom: 60, left: 70 };
+
+function resize() {
+  canvas.width = canvas.parentElement.clientWidth;
+  canvas.height = Math.max(580, window.innerHeight - 220);
+  draw();
+}
+
+function priceRange() {
+  const allP = bars.flatMap(b => [b.h, b.l]);
+  LEVELS.forEach(l => allP.push(l.p));
+  allP.push(CURRENT_PRICE);
+  const mn = Math.min(...allP) - 80;
+  const mx = Math.max(...allP) + 80;
+  return { mn, mx };
+}
+
+function toY(p, mn, mx) {
+  const h = canvas.height - PADDING.top - PADDING.bottom;
+  return PADDING.top + h * (1 - (p - mn) / (mx - mn));
+}
+
+function toX(i) {
+  const w = canvas.width - PADDING.left - PADDING.right;
+  return PADDING.left + (i + 0.5) * (w / bars.length);
+}
+
+function candleW() {
+  const w = canvas.width - PADDING.left - PADDING.right;
+  return Math.max(2, w / bars.length * 0.7);
+}
+
+function draw() {
+  const W = canvas.width, H = canvas.height;
+  const { mn, mx } = priceRange();
+
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid lines
+  const steps = 12;
+  const step = (mx - mn) / steps;
+  ctx.setLineDash([1, 4]);
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= steps; i++) {
+    const p = mn + i * step;
+    const y = toY(p, mn, mx);
+    ctx.strokeStyle = '#21262d';
+    ctx.beginPath(); ctx.moveTo(PADDING.left, y); ctx.lineTo(W - PADDING.right, y); ctx.stroke();
+    ctx.fillStyle = '#484f58';
+    ctx.font = '10px Courier New';
+    ctx.textAlign = 'right';
+    ctx.fillText(Math.round(p).toLocaleString(), PADDING.left - 4, y + 4);
+  }
+  ctx.setLineDash([]);
+
+  // FVG zone shading
+  const fvgTop = toY(29135, mn, mx);
+  const fvgBot = toY(29082, mn, mx);
+  ctx.fillStyle = 'rgba(210,153,34,0.07)';
+  ctx.fillRect(PADDING.left, fvgTop, W - PADDING.left - PADDING.right, fvgBot - fvgTop);
+
+  // Range zone shading
+  const rangeTop = toY(29045, mn, mx);
+  const rangeBot = toY(28960, mn, mx);
+  ctx.fillStyle = 'rgba(88,166,255,0.04)';
+  ctx.fillRect(PADDING.left, rangeTop, W - PADDING.left - PADDING.right, rangeBot - rangeTop);
+
+  // OB zone shading
+  const obTop = toY(28942, mn, mx);
+  const obBot = toY(28842, mn, mx);
+  ctx.fillStyle = 'rgba(63,185,80,0.06)';
+  ctx.fillRect(PADDING.left, obTop, W - PADDING.left - PADDING.right, obBot - obTop);
+
+  // Draw level lines
+  LEVELS.forEach(lv => {
+    const y = toY(lv.p, mn, mx);
+    ctx.strokeStyle = lv.color;
+    ctx.lineWidth = lv.w;
+    ctx.setLineDash(lv.dash);
+    ctx.beginPath();
+    ctx.moveTo(PADDING.left, y);
+    ctx.lineTo(W - PADDING.right, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Right side label box
+    const lx = W - PADDING.right + 6;
+    ctx.fillStyle = lv.color;
+    ctx.font = `bold 10px Courier New`;
+    ctx.textAlign = 'left';
+    ctx.fillText(lv.shortLabel, lx, y + 4);
+  });
+
+  // Draw candles
+  const cw = candleW();
+  bars.forEach((b, i) => {
+    const x = toX(i);
+    const bull = b.c >= b.o;
+    const bodyColor = bull ? '#3fb950' : '#f85149';
+    const wickColor = bull ? '#2ea043' : '#da3633';
+
+    const yH = toY(b.h, mn, mx);
+    const yL = toY(b.l, mn, mx);
+    const yO = toY(b.o, mn, mx);
+    const yC = toY(b.c, mn, mx);
+    const bodyTop = Math.min(yO, yC);
+    const bodyH = Math.max(1, Math.abs(yC - yO));
+
+    // Wick
+    ctx.strokeStyle = wickColor;
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(x, yH); ctx.lineTo(x, yL); ctx.stroke();
+
+    // Body
+    ctx.fillStyle = bodyColor;
+    ctx.fillRect(x - cw / 2, bodyTop, cw, bodyH);
+  });
+
+  // Current price line
+  const cy = toY(CURRENT_PRICE, mn, mx);
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([3, 3]);
+  ctx.beginPath(); ctx.moveTo(PADDING.left, cy); ctx.lineTo(W - PADDING.right, cy); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Current price label on right
+  ctx.fillStyle = '#58a6ff';
+  ctx.fillRect(W - PADDING.right + 4, cy - 8, 90, 16);
+  ctx.fillStyle = '#0d1117';
+  ctx.font = 'bold 10px Courier New';
+  ctx.textAlign = 'left';
+  ctx.fillText('▶ ' + CURRENT_PRICE.toLocaleString(), W - PADDING.right + 7, cy + 4);
+
+  // Current price label on left axis
+  ctx.fillStyle = '#58a6ff';
+  ctx.fillRect(0, cy - 8, PADDING.left - 2, 16);
+  ctx.fillStyle = '#0d1117';
+  ctx.font = 'bold 9px Courier New';
+  ctx.textAlign = 'right';
+  ctx.fillText(CURRENT_PRICE.toLocaleString(), PADDING.left - 4, cy + 4);
+
+  // Volume bars at bottom
+  const maxV = Math.max(...bars.map(b => b.v));
+  const volH = 40;
+  const volY = H - PADDING.bottom + 8;
+  bars.forEach((b, i) => {
+    const x = toX(i);
+    const h = (b.v / maxV) * volH;
+    ctx.fillStyle = b.c >= b.o ? '#3fb95055' : '#f8514955';
+    ctx.fillRect(x - cw / 2, volY + volH - h, cw, h);
+  });
+
+  // Time labels (every 10 bars)
+  ctx.fillStyle = '#484f58';
+  ctx.font = '9px Courier New';
+  ctx.textAlign = 'center';
+  bars.forEach((b, i) => {
+    if (i % 10 === 0) {
+      const d = new Date(b.t * 1000);
+      const label = d.getUTCHours().toString().padStart(2,'0') + ':' + d.getUTCMinutes().toString().padStart(2,'0');
+      ctx.fillText(label, toX(i), H - PADDING.bottom + 4);
+    }
+  });
+
+  // Zone annotations
+  ctx.font = 'bold 9px Courier New';
+  ctx.textAlign = 'left';
+  const annX = PADDING.left + 4;
+
+  ctx.fillStyle = '#d2992299';
+  ctx.fillText('⬡ BEARISH FVG / SHORT ENTRY', annX, (fvgTop + fvgBot) / 2 + 4);
+
+  ctx.fillStyle = '#58a6ff66';
+  ctx.fillText('⬡ COMPRESSION RANGE', annX, (rangeTop + rangeBot) / 2 + 4);
+
+  ctx.fillStyle = '#3fb95066';
+  ctx.fillText('⬡ BULLISH OB', annX, (obTop + obBot) / 2 + 4);
+}
+
+// Tooltip on hover
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
+  const { mn, mxx } = priceRange();
+  const w = canvas.width - PADDING.left - PADDING.right;
+  const i = Math.floor((mx - PADDING.left) / (w / bars.length));
+  if (i >= 0 && i < bars.length) {
+    const b = bars[i];
+    const d = new Date(b.t * 1000);
+    const time = d.getUTCHours().toString().padStart(2,'0') + ':' + d.getUTCMinutes().toString().padStart(2,'0') + ' UTC';
+    tooltip.style.display = 'block';
+    tooltip.style.left = (e.clientX + 12) + 'px';
+    tooltip.style.top = (e.clientY - 10) + 'px';
+    tooltip.innerHTML = `<b style="color:#58a6ff">${time}</b><br>O: ${b.o} &nbsp;H: <span style="color:#3fb950">${b.h}</span> &nbsp;L: <span style="color:#f85149">${b.l}</span> &nbsp;C: <b>${b.c}</b><br>Vol: ${b.v.toLocaleString()}`;
+  }
+});
+canvas.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+
+window.addEventListener('resize', resize);
+resize();
+</script>
+</body>
+</html>

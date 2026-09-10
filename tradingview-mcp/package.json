@@ -1,0 +1,20 @@
+{
+  "name": "tradingview-mcp",
+  "version": "1.0.0",
+  "description": "TradingView MCP server — real-time quotes and OHLCV via WebSocket",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js --http",
+    "start:stdio": "node src/server.js"
+  },
+  "dependencies": {
+    "@mathieuc/tradingview": "^2.0.0",
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "express": "^4.19.0",
+    "zod": "^3.23.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
