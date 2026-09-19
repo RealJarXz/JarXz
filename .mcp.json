@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "tradingview": {
+      "type": "sse",
+      "url": "https://jarxz-production.up.railway.app/sse"
+    }
+  }
+}
