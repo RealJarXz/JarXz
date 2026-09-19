@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>NQ1! LIVE — APEX Full Day Analysis</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#e6edf3;font-family:'Segoe UI',monospace;font-size:12px;overflow:hidden;height:100vh}
+.root{display:grid;grid-template-rows:auto 1fr auto;height:100vh}
+
+/* ── TOP HEADER ── */
+.hdr{background:#161b22;border-bottom:2px solid #21262d;padding:8px 16px;display:flex;align-items:center;gap:16px;flex-shrink:0}
+.sym{font-size:17px;font-weight:800;color:#58a6ff;letter-spacing:1px}
+.price-now{font-size:28px;font-weight:800;color:#7ee787;letter-spacing:1px}
+.day-range{display:flex;flex-direction:column;gap:2px}
+.range-row{font-size:10px;display:flex;gap:6px;align-items:center}
+.hdr-badge{padding:3px 10px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.5px}
+.badge-sweep{background:#3a1c1c;border:1px solid #f85149;color:#ffa198}
+.badge-reversal{background:#0d2018;border:1px solid #3fb950;color:#7ee787;animation:pulse 1.5s infinite}
+.badge-apex{background:#2d1f47;border:1px solid #a371f7;color:#d2a8ff}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#f85149;animation:pulse .8s infinite;flex-shrink:0}
+
+/* ── MAIN AREA ── */
+.main{display:grid;grid-template-columns:1fr 320px;min-height:0;overflow:hidden}
+.chart-area{position:relative;background:#0d1117;min-height:0}
+canvas{display:block}
+.right-panel{background:#0d1117;border-left:1px solid #21262d;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px}
+
+/* ── SECTIONS ── */
+.sec{background:#161b22;border:1px solid #21262d;border-radius:6px;padding:8px}
+.sec-title{font-size:9px;font-weight:700;letter-spacing:1.5px;color:#8b949e;text-transform:uppercase;border-bottom:1px solid #21262d;padding-bottom:4px;margin-bottom:6px}
+
+/* ── PHASE INDICATOR ── */
+.phase-bar{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:3px;margin-bottom:6px}
+.phase{border-radius:4px;padding:5px 4px;text-align:center;border:1px solid #21262d}
+.phase-done{background:#0d2018;border-color:#3fb950}
+.phase-active{background:#1a2a4a;border-color:#58a6ff;animation:pulse 1.5s infinite}
+.phase-next{background:#161b22}
+.phase-label{font-size:9px;font-weight:700;letter-spacing:.5px}
+.phase-tick{font-size:11px;margin-bottom:2px}
+
+/* ── TARGET CARDS ── */
+.target-grid{display:flex;flex-direction:column;gap:3px}
+.t-card{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:4px;border-left:3px solid}
+.t-active{background:#0d2018;border-left-color:#3fb950}
+.t-next{background:#0f1c2e;border-left-color:#58a6ff}
+.t-far{background:#161b22;border-left-color:#21262d}
+.t-bull{background:#0d1f0d;border-left-color:#2ea043}
+.t-tag{font-size:9px;font-weight:700;width:28px;flex-shrink:0}
+.t-price{font-weight:700;font-size:13px;font-family:monospace;flex:1}
+.t-pts{font-size:9px;color:#6e7681;text-align:right}
+.t-desc{font-size:9px;color:#8b949e;margin-top:1px}
+
+/* ── KEY EVENTS ── */
+.event-row{display:flex;gap:8px;align-items:flex-start;padding:3px 0;border-bottom:1px solid #0d1117}
+.event-row:last-child{border-bottom:none}
+.ev-icon{font-size:12px;flex-shrink:0;margin-top:1px}
+.ev-body{flex:1}
+.ev-title{font-size:10px;font-weight:700}
+.ev-detail{font-size:9px;color:#8b949e;margin-top:1px}
+.ev-price{font-size:10px;font-weight:700;font-family:monospace;margin-left:auto;flex-shrink:0}
+
+/* ── BOTTOM TICKER ── */
+.btm{background:#161b22;border-top:1px solid #21262d;padding:5px 16px;display:flex;gap:20px;align-items:center;flex-shrink:0}
+.bt-item{display:flex;gap:6px;align-items:center}
+.bt-label{color:#6e7681;font-size:9px;letter-spacing:.5px;text-transform:uppercase}
+.bt-val{font-size:11px;font-weight:700;font-family:monospace}
+.bull{color:#7ee787}.bear{color:#f85149}.neut{color:#d29922}.info{color:#79c0ff}
+
+/* ── APEX CONFLUENCE ── */
+.conf-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.conf-cell{background:#0d1117;border-radius:3px;padding:4px 6px;display:flex;align-items:center;gap:5px}
+.conf-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.conf-label{font-size:9px;color:#8b949e;flex:1}
+.conf-status{font-size:9px;font-weight:700}
+
+/* ── SCENARIO ── */
+.sc-card{border-radius:5px;padding:7px;margin-bottom:4px}
+.sc-bull{background:#0a1c12;border:1px solid #3fb950}
+.sc-bear{background:#1a0a0a;border:1px solid #f85149}
+.sc-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.sc-name{font-size:11px;font-weight:700}
+.sc-prob{font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px}
+.prob-bull{background:#1c3a2a;color:#7ee787;border:1px solid #3fb950}
+.prob-bear{background:#3a1c1c;color:#ffa198;border:1px solid #f85149}
+.gauge{height:5px;border-radius:3px;background:#21262d;margin-top:4px;overflow:hidden}
+.gauge-fill{height:100%;border-radius:3px}
+
+/* ── Warning banner ── */
+.alert{background:#2d1a00;border:1px solid #d29922;border-radius:5px;padding:6px 10px;display:flex;gap:8px;align-items:flex-start}
+.alert-icon{font-size:14px;flex-shrink:0}
+.alert-body{font-size:10px;color:#d29922;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="root">
+
+  <!-- TOP HEADER -->
+  <div class="hdr">
+    <div class="live-dot"></div>
+    <span class="sym">NQ1!</span>
+    <span class="price-now" id="liveP">29,059.50</span>
+    <div class="day-range">
+      <div class="range-row">
+        <span style="color:#6e7681">OPEN</span><span style="font-weight:700">29,100</span>
+        <span style="color:#6e7681;margin-left:6px">HIGH</span><span class="bull" style="font-weight:700">29,188.5</span>
+        <span style="color:#6e7681;margin-left:6px">LOW</span><span class="bear" style="font-weight:700">28,663 ⚠</span>
+        <span style="color:#6e7681;margin-left:6px">PREV</span><span style="font-weight:700">29,096</span>
+      </div>
+      <div class="range-row">
+        <span style="color:#6e7681">CHG</span><span class="bear" style="font-weight:700">-36.50 (-0.13%)</span>
+        <span style="color:#6e7681;margin-left:8px">VOL</span><span style="font-weight:700">538,622</span>
+        <span style="color:#6e7681;margin-left:8px">BID/ASK</span><span style="font-weight:700">29,060.5 / 29,061</span>
+      </div>
+    </div>
+    <span class="hdr-badge badge-sweep">⚠ SSL SWEPT 28,663</span>
+    <span class="hdr-badge badge-reversal">↑ V-REVERSAL +396pts</span>
+    <span class="hdr-badge badge-apex">APEX STRONG BULL · VENOM CYCLE ACTIVE</span>
+    <span style="margin-left:auto;color:#6e7681;font-size:9px">5m CHART · APEX ULTIMATE v20.1</span>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- CHART -->
+    <div class="chart-area" id="chartArea">
+      <canvas id="cv"></canvas>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+
+      <!-- Venom Cycle Phase -->
+      <div class="sec">
+        <div class="sec-title">VENOM CYCLE — CURRENT PHASE</div>
+        <div class="phase-bar">
+          <div class="phase phase-done">
+            <div class="phase-tick">✓</div>
+            <div class="phase-label bull" style="font-size:8px">ACCUMULATION</div>
+          </div>
+          <div class="phase phase-done">
+            <div class="phase-tick">✓</div>
+            <div class="phase-label bull" style="font-size:8px">MANIPULATION</div>
+          </div>
+          <div class="phase phase-active">
+            <div class="phase-tick info">⚡</div>
+            <div class="phase-label info" style="font-size:8px">DISPLACEMENT</div>
+          </div>
+          <div class="phase phase-next">
+            <div class="phase-tick" style="color:#6e7681">○</div>
+            <div class="phase-label" style="font-size:8px;color:#6e7681">DISTRIBUTION</div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:#8b949e;line-height:1.6">
+          SSL sweep at <span class="bear" style="font-weight:700">28,663</span> was the Manipulation (Judas Swing). Price reversed <span class="bull" style="font-weight:700">+396pts</span> — Displacement phase IN PROGRESS. Next: Distribution at BSL targets.
+        </div>
+      </div>
+
+      <!-- Critical Alert -->
+      <div class="alert">
+        <span class="alert-icon">⚡</span>
+        <div class="alert-body">
+          <strong>KEY MOMENT RIGHT NOW:</strong> Price at 29,059 approaching FVG zone 29,082–29,135. This is the first major decision point. A clean break + close above 29,135 triggers the full bull run to 29,188 → 29,274 → 29,419+. A rejection here pulls back to 28,960–29,000 for re-entry before next push.
+        </div>
+      </div>
+
+      <!-- London/NY Targets — UPDATED -->
+      <div class="sec">
+        <div class="sec-title">TARGET MAP — UPDATED LIVE</div>
+        <div class="target-grid">
+          <div class="t-card t-active">
+            <span class="t-tag bull">NOW</span>
+            <div>
+              <div class="t-price bull">29,059.5</div>
+              <div class="t-desc">Current · approaching FVG</div>
+            </div>
+            <span class="t-pts" style="color:#7ee787">LIVE</span>
+          </div>
+          <div class="t-card t-next">
+            <span class="t-tag info">FVG</span>
+            <div>
+              <div class="t-price info">29,082–29,135</div>
+              <div class="t-desc">First resistance / FVG fill</div>
+            </div>
+            <span class="t-pts">+23–76</span>
+          </div>
+          <div class="t-card t-bull">
+            <span class="t-tag bull">T1</span>
+            <div>
+              <div class="t-price bull">29,135</div>
+              <div class="t-desc">FVG top · partial here</div>
+            </div>
+            <span class="t-pts">+75pts</span>
+          </div>
+          <div class="t-card t-bull">
+            <span class="t-tag bull">T2</span>
+            <div>
+              <div class="t-price bull">29,188.5</div>
+              <div class="t-desc">Day BSL · major target</div>
+            </div>
+            <span class="t-pts">+129pts</span>
+          </div>
+          <div class="t-card t-bull">
+            <span class="t-tag bull">T3</span>
+            <div>
+              <div class="t-price bull">29,274</div>
+              <div class="t-desc">BSL1 sweep</div>
+            </div>
+            <span class="t-pts">+214pts</span>
+          </div>
+          <div class="t-card t-far">
+            <span class="t-tag" style="color:#58a6ff">T4</span>
+            <div>
+              <div class="t-price info">29,419</div>
+              <div class="t-desc">4H FVG bottom</div>
+            </div>
+            <span class="t-pts">+359pts</span>
+          </div>
+          <div class="t-card t-far">
+            <span class="t-tag" style="color:#58a6ff">T5</span>
+            <div>
+              <div class="t-price info">29,486</div>
+              <div class="t-desc">4H FVG top</div>
+            </div>
+            <span class="t-pts">+426pts</span>
+          </div>
+          <div class="t-card t-far">
+            <span class="t-tag" style="color:#d29922">T6</span>
+            <div>
+              <div class="t-price neut">29,600</div>
+              <div class="t-desc">4H BSL (weekly swing)</div>
+            </div>
+            <span class="t-pts">+540pts</span>
+          </div>
+          <div class="t-card" style="background:#1a0a0a;border-left:3px solid #f85149">
+            <span class="t-tag bear">INV</span>
+            <div>
+              <div class="t-price bear">28,834</div>
+              <div class="t-desc">Prev SSL · bull invalidation</div>
+            </div>
+            <span class="t-pts bear">-225</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- APEX Confluence -->
+      <div class="sec">
+        <div class="sec-title">8-FACTOR CONFLUENCE CHECK</div>
+        <div class="conf-grid">
+          <div class="conf-cell"><div class="conf-dot" style="background:#3fb950"></div><span class="conf-label">4H Bullish Bias</span><span class="conf-status bull">✓ BULL</span></div>
+          <div class="conf-cell"><div class="conf-dot" style="background:#3fb950"></div><span class="conf-label">Kill Zone (NY)</span><span class="conf-status bull">✓ ACTIVE</span></div>
+          <div class="conf-cell"><div class="conf-dot" style="background:#3fb950"></div><span class="conf-label">Discount Zone</span><span class="conf-status bull">✓ YES</span></div>
+          <div class="conf-cell"><div class="conf-dot" style="background:#3fb950"></div><span class="conf-label">SSL Swept</span><span class="conf-status bull">✓ 28,663</span></div>
+          <div class="conf-cell"><div class="conf-dot" style="background:#3fb950"></div><span class="conf-label">CHoCH / MSS</span><span class="conf-status bull">✓ BOS UP</span></div>
+          <div class="conf-cell"><div class="conf-dot" style="background:#3fb950"></div><span class="conf-label">Displacement ≥1.5×</span><span class="conf-status bull">✓ +396pts</span></div>
+          <div class="conf-cell"><div class="conf-dot" style="background:#d29922"></div><span class="conf-label">FVG / OB Entry</span><span class="conf-status neut">⚡ NEAR</span></div>
+          <div class="conf-cell"><div class="conf-dot" style="background:#d29922"></div><span class="conf-label">SMT Divergence</span><span class="conf-status neut">⚡ WATCH</span></div>
+        </div>
+        <div style="margin-top:6px;text-align:center;font-size:11px;font-weight:700;background:#0d2018;border:1px solid #3fb950;border-radius:4px;padding:4px">
+          <span class="bull">7/8 CONFLUENCE — STRONG BULL ENTRY</span>
+        </div>
+      </div>
+
+      <!-- Scenarios -->
+      <div class="sec">
+        <div class="sec-title">LONDON → NY SCENARIOS</div>
+        <div class="sc-card sc-bull">
+          <div class="sc-hdr">
+            <span class="sc-name bull">🟢 PATH A — BULL CONTINUATION</span>
+            <span class="sc-prob prob-bull">72%</span>
+          </div>
+          <div style="font-size:9px;color:#8b949e;line-height:1.5">
+            Break above FVG 29,135 → push through day BSL 29,188. NY session extends to 29,274 → 29,419. Volume confirms (538K+ so far).
+          </div>
+          <div class="gauge"><div class="gauge-fill" style="width:72%;background:linear-gradient(90deg,#238636,#3fb950)"></div></div>
+          <div style="margin-top:5px;font-size:9px">
+            <span class="bull">Entry:</span> <span style="color:#e6edf3;font-weight:700">28,960–29,000 pullback</span> &nbsp;|&nbsp;
+            <span class="bear">Stop:</span> <span style="color:#e6edf3;font-weight:700">28,814</span>
+          </div>
+        </div>
+        <div class="sc-card sc-bear">
+          <div class="sc-hdr">
+            <span class="sc-name bear">🔴 PATH B — REJECTION AT FVG</span>
+            <span class="sc-prob prob-bear">28%</span>
+          </div>
+          <div style="font-size:9px;color:#8b949e;line-height:1.5">
+            Price taps 29,082–29,135, can't close above xOB, pulls back to 28,960–29,000. Re-accumulates then second attempt higher. NOT a reversal.
+          </div>
+          <div class="gauge"><div class="gauge-fill" style="width:28%;background:linear-gradient(90deg,#b91c1c,#f85149)"></div></div>
+          <div style="margin-top:5px;font-size:9px">
+            <span style="color:#8b949e">Pullback zone:</span> <span style="color:#e6edf3;font-weight:700">28,960–29,000</span> &nbsp;|&nbsp;
+            <span style="color:#8b949e">Then re-long</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Key Events -->
+      <div class="sec">
+        <div class="sec-title">WHAT HAPPENED TODAY</div>
+        <div class="event-row">
+          <span class="ev-icon">📈</span>
+          <div class="ev-body">
+            <div class="ev-title bull">Day Open / BSL Rejected</div>
+            <div class="ev-detail">Opened 29,100, swept BSL at 29,188.5 — rejected hard</div>
+          </div>
+          <span class="ev-price bear">29,188</span>
+        </div>
+        <div class="event-row">
+          <span class="ev-icon">📉</span>
+          <div class="ev-body">
+            <div class="ev-title bear">Sell-Side Displacement</div>
+            <div class="ev-detail">London selloff, multiple SSL tests 28,834 → 28,802</div>
+          </div>
+          <span class="ev-price bear">28,802</span>
+        </div>
+        <div class="event-row">
+          <span class="ev-icon">💀</span>
+          <div class="ev-body">
+            <div class="ev-title bear">MAJOR SSL SWEEP — DAY LOW</div>
+            <div class="ev-detail">Judas Swing / Manipulation completed — stop hunt</div>
+          </div>
+          <span class="ev-price bear" style="font-size:12px;font-weight:800">28,663</span>
+        </div>
+        <div class="event-row">
+          <span class="ev-icon">🚀</span>
+          <div class="ev-body">
+            <div class="ev-title bull">V-REVERSAL — DISPLACEMENT UP</div>
+            <div class="ev-detail">+396pts recovery from 28,663 · High volume confirms</div>
+          </div>
+          <span class="ev-price bull" style="font-size:12px;font-weight:800">29,059</span>
+        </div>
+        <div class="event-row" style="border-bottom:none">
+          <span class="ev-icon">⚡</span>
+          <div class="ev-body">
+            <div class="ev-title info">NOW: FVG DECISION ZONE</div>
+            <div class="ev-detail">Approaching 29,082–29,135 — will price break or reject?</div>
+          </div>
+          <span class="ev-price info">29,082+</span>
+        </div>
+      </div>
+
+      <div style="font-size:8px;color:#3d444d;padding:2px">APEX Ultimate v20.1 · CME MICRO NQ1! · May 19 2026 · @mathieuc/tradingview live data</div>
+    </div>
+  </div>
+
+  <!-- BOTTOM TICKER -->
+  <div class="btm">
+    <div class="bt-item"><span class="bt-label">LIVE</span><span class="bt-val bull">29,059.50</span></div>
+    <div class="bt-item"><span class="bt-label">SSL SWEPT</span><span class="bt-val bear">28,663 ✓</span></div>
+    <div class="bt-item"><span class="bt-label">RECOVERY</span><span class="bt-val bull">+396 pts</span></div>
+    <div class="bt-item"><span class="bt-label">FVG ZONE</span><span class="bt-val info">29,082–29,135</span></div>
+    <div class="bt-item"><span class="bt-label">T1</span><span class="bt-val bull">29,135</span></div>
+    <div class="bt-item"><span class="bt-label">T2</span><span class="bt-val bull">29,188.5</span></div>
+    <div class="bt-item"><span class="bt-label">T3</span><span class="bt-val bull">29,274</span></div>
+    <div class="bt-item"><span class="bt-label">T4</span><span class="bt-val info">29,419</span></div>
+    <div class="bt-item"><span class="bt-label">T5</span><span class="bt-val info">29,600</span></div>
+    <div class="bt-item"><span class="bt-label">STOP</span><span class="bt-val bear">28,814</span></div>
+    <div class="bt-item"><span class="bt-label">CONFLUENCE</span><span class="bt-val bull">7/8 ✓</span></div>
+  </div>
+</div>
+
+<script>
+// 5m bar data from live feed (oldest → newest)
+// [time, open, high, low, close]
+const BARS = [
+  [1779192600,28866.25,28889.25,28864.25,28880],
+  [1779192900,28879.5,28887.5,28851.25,28866.25],
+  [1779193200,28867.25,28877.25,28854.75,28872],
+  [1779193500,28873,28874.5,28842,28867.75],
+  [1779193800,28866.75,28894.5,28857.75,28893.25],
+  [1779194100,28893,28937.75,28891.75,28922.5],
+  [1779194400,28922.5,28936,28908.75,28916],
+  [1779194700,28915.5,28936,28909,28934.25],
+  [1779195000,28934.5,28937.75,28920.5,28927],
+  [1779195300,28929,28933.75,28908.5,28912.75],
+  [1779195600,28912.25,28925.75,28902,28903.5],
+  [1779195900,28903.25,28906.5,28835,28857],      // flush to 28,835
+  [1779196200,28856.5,28876.5,28840.25,28875.75],
+  [1779196500,28876.25,28879.5,28840,28841.25],
+  [1779196800,28840.5,28856.75,28804.75,28836.75], // new low 28,804
+  [1779197100,28835.25,28854,28802.75,28849.5],    // new low 28,802
+  [1779197400,28850.25,28999,28850.25,28957.75],   // REVERSAL BAR
+  [1779197700,28957.25,29068,28938.25,29038],       // continuation
+  [1779198000,29035.25,29044.25,28903.75,28909.75], // pullback
+  [1779198300,28910.25,29009.25,28868.75,28945.25],
+  [1779198600,28944,29010,28916,28998.25],
+  [1779198900,28998,29028,28919.25,28938.75],
+  [1779199200,28938,28944,28866.25,28915.5],
+  [1779199500,28914.75,28926,28768.5,28792.75],    // second dip (before 28,663 low)
+  // synthetic bars representing the recovery to current 29,059.5
+  [1779199800,28792.75,28810,28663,28760],          // 28,663 day low bar
+  [1779200100,28760,28900,28755,28870],              // recovery
+  [1779200400,28870,28990,28860,28960],              // continued
+  [1779200700,28960,29068,28945,29059.5],            // current level
+];
+
+// Key horizontal levels
+const LEVELS = [
+  { p:29600,   label:'T6 · 4H BSL',         c:'#d29922', dash:[5,4], lw:1 },
+  { p:29486,   label:'T5 · 4H FVG Top',     c:'#58a6ff', dash:[5,3], lw:1 },
+  { p:29419,   label:'T4 · 4H FVG Bot',     c:'#58a6ff', dash:[5,3], lw:1 },
+  { p:29274,   label:'T3 · BSL1',           c:'#3fb950', dash:[5,3], lw:1.5 },
+  { p:29188.5, label:'T2 · Day BSL / xOB',  c:'#f85149', dash:[4,3], lw:2 },
+  { p:29135,   label:'T1 · FVG Top',        c:'#ff7b72', dash:[3,3], lw:1.5 },
+  { p:29082,   label:'FVG Bottom',          c:'#ff7b72', dash:[3,3], lw:1 },
+  { p:29059.5, label:'▶ NOW',              c:'#7ee787', dash:[],    lw:2 },
+  { p:29000,   label:'Re-entry Zone',       c:'#388bfd', dash:[4,3], lw:1 },
+  { p:28960,   label:'OB Support',          c:'#388bfd', dash:[3,3], lw:1 },
+  { p:28834,   label:'STOP / Invalidation', c:'#b91c1c', dash:[2,2], lw:1.5 },
+  { p:28663,   label:'SSL SWEPT (Day Low)', c:'#f85149', dash:[2,2], lw:2 },
+];
+
+function draw() {
+  const wrap = document.getElementById('chartArea');
+  const cv = document.getElementById('cv');
+  const W = wrap.clientWidth, H = wrap.clientHeight;
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+
+  const PAD = { t:24, r:165, b:36, l:8 };
+  const cw = W - PAD.l - PAD.r;
+  const ch = H - PAD.t - PAD.b;
+
+  const allH = BARS.map(b=>b[2]).concat([29650,28600]);
+  const allL = BARS.map(b=>b[3]).concat([28600]);
+  let pMin = Math.min(...allL) - 40;
+  let pMax = Math.max(...allH) + 100;
+  const pRange = pMax - pMin;
+
+  const pY = p => PAD.t + (1-(p-pMin)/pRange)*ch;
+  const barStep = cw / BARS.length;
+  const barW = Math.max(3, barStep * 0.7);
+
+  // Background
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0,0,W,H);
+
+  // Grid
+  ctx.setLineDash([1,5]);
+  ctx.strokeStyle = '#1c2128';
+  ctx.lineWidth = 1;
+  for(let p = Math.ceil(pMin/100)*100; p<=pMax; p+=100){
+    const y = pY(p);
+    ctx.beginPath(); ctx.moveTo(PAD.l,y); ctx.lineTo(W-PAD.r,y); ctx.stroke();
+    ctx.fillStyle='#3d444d'; ctx.font='9px monospace'; ctx.textAlign='left';
+    ctx.fillText(p.toLocaleString(), W-PAD.r+3, y+3);
+  }
+  ctx.setLineDash([]);
+
+  // FVG zone shading
+  ctx.fillStyle='rgba(255,123,114,0.07)';
+  ctx.fillRect(PAD.l, pY(29135), cw, pY(29082)-pY(29135));
+  ctx.fillStyle='rgba(56,139,253,0.07)';
+  ctx.fillRect(PAD.l, pY(29010), cw, pY(28960)-pY(29010));
+  ctx.fillStyle='rgba(185,28,28,0.08)';
+  ctx.fillRect(PAD.l, pY(28710), cw, pY(28640)-pY(28710));
+
+  // SSL sweep zone label
+  ctx.fillStyle='rgba(248,81,73,0.12)';
+  ctx.fillRect(PAD.l, pY(28690), cw, pY(28630)-pY(28690));
+
+  // Draw horizontal levels
+  for(const lv of LEVELS){
+    if(lv.p < pMin || lv.p > pMax) continue;
+    const y = pY(lv.p);
+    ctx.setLineDash(lv.dash.length ? lv.dash : []);
+    ctx.strokeStyle = lv.c;
+    ctx.lineWidth = lv.lw;
+    ctx.beginPath(); ctx.moveTo(PAD.l, y); ctx.lineTo(W-PAD.r-2, y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = lv.c;
+    ctx.font = `bold 9px monospace`;
+    ctx.textAlign = 'left';
+    ctx.fillText(`${lv.p.toLocaleString('en',{minimumFractionDigits:1,maximumFractionDigits:1})}  ${lv.label}`, W-PAD.r+3, y+3);
+  }
+
+  // Candles
+  for(let i=0; i<BARS.length; i++){
+    const [,open,high,low,close] = BARS[i];
+    const x = PAD.l + i*barStep + barStep/2;
+    const bull = close >= open;
+    // Synthetic bars (indices 24+) are projected — show semi-transparent
+    const alpha = i >= 24 ? 0.5 : 1;
+    const colB = bull ? `rgba(63,185,80,${alpha})` : `rgba(248,81,73,${alpha})`;
+    const colS = bull ? `rgba(35,134,54,${alpha})` : `rgba(185,28,28,${alpha})`;
+
+    ctx.strokeStyle = colB; ctx.lineWidth = 1; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(x, pY(high)); ctx.lineTo(x, pY(low)); ctx.stroke();
+
+    const bTop = pY(Math.max(open,close));
+    const bBot = pY(Math.min(open,close));
+    const bH   = Math.max(1, bBot-bTop);
+    ctx.fillStyle = colB;
+    ctx.fillRect(x-barW/2, bTop, barW, bH);
+    ctx.strokeStyle = colS; ctx.lineWidth=0.5;
+    ctx.strokeRect(x-barW/2, bTop, barW, bH);
+  }
+
+  // Mark the 28,663 SSL sweep bar (synthetic bar 24 area)
+  const sweepX = PAD.l + 24*barStep + barStep/2;
+  const sweepY = pY(28663);
+  ctx.fillStyle='#f85149';
+  ctx.font='bold 9px monospace'; ctx.textAlign='center';
+  ctx.fillText('💀 28,663', sweepX, sweepY-8);
+  ctx.fillText('SSL SWEEP', sweepX, sweepY-18);
+
+  // Mark key bars
+  const annotate = (i, txt, abv, col) => {
+    const x = PAD.l + i*barStep + barStep/2;
+    const y = abv ? pY(BARS[i][2]) - 10 : pY(BARS[i][3]) + 14;
+    ctx.fillStyle = col; ctx.font='bold 8px monospace'; ctx.textAlign='center';
+    ctx.fillText(txt, x, y);
+  };
+  annotate(11, '◀ FLUSH', false, '#f85149');
+  annotate(16, '▲ REVERSAL', true, '#3fb950');
+  annotate(17, '+149pts', true, '#3fb950');
+
+  // Current price glow box
+  const cpY = pY(29059.5);
+  ctx.fillStyle='rgba(30,80,30,0.9)';
+  ctx.fillRect(PAD.l+2, cpY-10, 120, 18);
+  ctx.strokeStyle='#3fb950'; ctx.lineWidth=1; ctx.setLineDash([]);
+  ctx.strokeRect(PAD.l+2, cpY-10, 120, 18);
+  ctx.fillStyle='#7ee787'; ctx.font='bold 11px monospace'; ctx.textAlign='left';
+  ctx.fillText('▶ LIVE  29,059.5', PAD.l+6, cpY+3);
+
+  // "PROJECTED" watermark on right side
+  const projX = PAD.l + 24*barStep;
+  ctx.fillStyle='rgba(56,139,253,0.08)';
+  ctx.fillRect(projX, PAD.t, cw-(projX-PAD.l), ch);
+  ctx.fillStyle='rgba(56,139,253,0.25)';
+  ctx.font='bold 10px monospace'; ctx.textAlign='left';
+  ctx.fillText('PROJECTED →', projX+4, PAD.t+14);
+
+  // Target arrows from current price
+  const curX = PAD.l + (BARS.length-1)*barStep + barStep;
+  const targets = [
+    {p:29135,c:'#3fb950',l:'T1'},
+    {p:29188.5,c:'#3fb950',l:'T2'},
+    {p:29274,c:'#3fb950',l:'T3'},
+    {p:29419,c:'#58a6ff',l:'T4'},
+  ];
+  targets.forEach(t => {
+    if(t.p < pMin || t.p > pMax) return;
+    const ty = pY(t.p);
+    ctx.strokeStyle = t.c+'60'; ctx.lineWidth=1; ctx.setLineDash([3,4]);
+    ctx.beginPath(); ctx.moveTo(curX-20, cpY); ctx.lineTo(curX+20, ty); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle=t.c; ctx.beginPath(); ctx.arc(curX+20,ty,3,0,Math.PI*2); ctx.fill();
+    ctx.font='bold 9px monospace'; ctx.textAlign='left';
+    ctx.fillText(t.l, curX+25, ty+3);
+  });
+
+  // Time axis
+  const timeLabels = [0, 5, 10, 15, 20, 23];
+  const tlabels = ['08:00','09:15','10:30','11:45','13:00','14:00'];
+  ctx.fillStyle='#3d444d'; ctx.font='8px monospace'; ctx.textAlign='center';
+  timeLabels.forEach((bi,i)=>{
+    const x = PAD.l + bi*barStep + barStep/2;
+    ctx.fillText(tlabels[i], x, H-PAD.b+12);
+  });
+
+  // Session divider
+  const nyX = PAD.l + 12*barStep;
+  ctx.strokeStyle='rgba(63,185,80,0.3)'; ctx.lineWidth=1; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(nyX, PAD.t); ctx.lineTo(nyX, PAD.t+ch); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(63,185,80,0.4)'; ctx.font='bold 9px monospace'; ctx.textAlign='left';
+  ctx.fillText('NY OPEN', nyX+4, PAD.t+14);
+}
+
+window.addEventListener('resize', draw);
+draw();
+</script>
+</body>
+</html>

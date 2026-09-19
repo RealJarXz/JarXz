@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>NQ1! — London + NY Session Analysis | APEX Ultimate</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0d1117;color:#e6edf3;font-family:'Segoe UI',monospace;font-size:12px;height:100vh;overflow:hidden}
+
+  /* ── Layout ── */
+  .root{display:flex;height:100vh;gap:0}
+  .left{flex:1;display:flex;flex-direction:column;min-width:0}
+  .right{width:340px;display:flex;flex-direction:column;border-left:1px solid #21262d;overflow-y:auto;padding:10px 8px;gap:8px;flex-shrink:0}
+
+  /* ── Header ── */
+  .hdr{background:#161b22;border-bottom:1px solid #21262d;padding:8px 12px;display:flex;align-items:center;gap:14px;flex-shrink:0}
+  .sym{font-size:15px;font-weight:700;color:#58a6ff;letter-spacing:.5px}
+  .price-badge{font-size:20px;font-weight:700;color:#e6edf3}
+  .chg-neg{color:#f85149;font-size:13px;font-weight:600}
+  .session-tag{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.5px}
+  .london{background:#1c3a5c;border:1px solid #388bfd;color:#79c0ff}
+  .newyork{background:#1a3a2a;border:1px solid #3fb950;color:#7ee787}
+  .apex-tag{background:#2d1f47;border:1px solid #a371f7;color:#d2a8ff;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700}
+
+  /* ── Chart ── */
+  .chart-wrap{flex:1;position:relative;overflow:hidden;background:#0d1117}
+  canvas{display:block}
+
+  /* ── Right panel sections ── */
+  .section{background:#161b22;border:1px solid #21262d;border-radius:6px;padding:8px}
+  .section-title{font-size:10px;font-weight:700;letter-spacing:1px;color:#8b949e;margin-bottom:6px;text-transform:uppercase;border-bottom:1px solid #21262d;padding-bottom:4px}
+
+  /* ── Price levels list ── */
+  .level-row{display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid #0d1117}
+  .level-row:last-child{border-bottom:none}
+  .lvl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .lvl-label{flex:1;color:#8b949e;font-size:10px}
+  .lvl-price{font-weight:700;font-size:11px;font-family:monospace}
+  .lvl-dist{font-size:9px;color:#6e7681;margin-left:auto}
+
+  /* ── Scenario cards ── */
+  .scenario{border-radius:6px;padding:8px;margin-bottom:6px}
+  .scenario-a{background:#0d2018;border:1px solid #3fb950}
+  .scenario-b{background:#1a0d0d;border:1px solid #f85149}
+  .sc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .sc-name{font-weight:700;font-size:12px}
+  .sc-prob{font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px}
+  .prob-bull{background:#1c3a2a;color:#7ee787;border:1px solid #3fb950}
+  .prob-bear{background:#3a1c1c;color:#ffa198;border:1px solid #f85149}
+  .sc-desc{color:#8b949e;font-size:10px;margin-bottom:6px;line-height:1.5}
+  .target-row{display:flex;justify-content:space-between;align-items:center;padding:2px 0}
+  .t-label{font-size:10px;font-weight:700}
+  .t-price{font-size:11px;font-weight:700;font-family:monospace}
+  .t-pts{font-size:9px;color:#6e7681}
+
+  /* ── Gauge ── */
+  .gauge-bar{height:6px;border-radius:3px;background:#21262d;margin-top:4px;overflow:hidden}
+  .gauge-fill{height:100%;border-radius:3px;transition:width .3s}
+
+  /* ── APEX status ── */
+  .apex-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:4px}
+  .apex-cell{background:#0d1117;border-radius:4px;padding:4px 6px;text-align:center}
+  .apex-val{font-size:13px;font-weight:700}
+  .apex-key{font-size:9px;color:#6e7681;margin-top:1px}
+  .bull{color:#7ee787}.bear{color:#f85149}.neut{color:#d29922}.info{color:#79c0ff}
+
+  /* ── Trigger checklist ── */
+  .check-row{display:flex;align-items:center;gap:6px;padding:3px 0}
+  .chk{width:14px;height:14px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
+  .chk-ok{background:#1c3a2a;color:#7ee787;border:1px solid #3fb950}
+  .chk-wait{background:#2d2211;color:#d29922;border:1px solid #d29922}
+  .chk-no{background:#3a1c1c;color:#f85149;border:1px solid #f85149}
+  .chk-label{font-size:10px;color:#8b949e;flex:1}
+  .chk-val{font-size:10px;font-weight:700;font-family:monospace}
+
+  /* ── NY section ── */
+  .ny-depends{background:#0d1117;border-radius:4px;padding:6px;font-size:10px;color:#8b949e;line-height:1.6;margin-bottom:6px}
+  .highlight{color:#e6edf3;font-weight:700}
+  .timestamp{color:#6e7681;font-size:9px;margin-top:4px}
+
+  /* ── Bottom ticker ── */
+  .ticker{background:#0d1117;border-top:1px solid #21262d;padding:4px 12px;display:flex;gap:16px;flex-shrink:0}
+  .tick-item{display:flex;gap:5px;align-items:center}
+  .tick-label{color:#6e7681;font-size:10px}
+  .tick-val{font-size:10px;font-weight:700}
+</style>
+</head>
+<body>
+<div class="root">
+
+  <!-- LEFT: Chart -->
+  <div class="left">
+    <div class="hdr">
+      <span class="sym">NQ1! &nbsp;CME MICRO</span>
+      <span class="price-badge" id="livePrice">28,934.00</span>
+      <span class="chg-neg">▼ -162.00 (-0.56%)</span>
+      <span class="session-tag london">🇬🇧 LONDON 08:00–13:00 UTC</span>
+      <span class="session-tag newyork">🗽 NEW YORK 13:30–21:00 UTC</span>
+      <span class="apex-tag">APEX ULTIMATE ● STRONG BULL 6/6</span>
+      <span style="margin-left:auto;color:#6e7681;font-size:10px">15m CHART · APEX SESSION MAP</span>
+    </div>
+    <div class="chart-wrap" id="chartWrap">
+      <canvas id="cv"></canvas>
+    </div>
+    <div class="ticker">
+      <div class="tick-item"><span class="tick-label">OPEN</span><span class="tick-val" style="color:#e6edf3">29,100.00</span></div>
+      <div class="tick-item"><span class="tick-label">HIGH</span><span class="tick-val bull">29,188.50</span></div>
+      <div class="tick-item"><span class="tick-label">LOW</span><span class="tick-val bear">28,834.75</span></div>
+      <div class="tick-item"><span class="tick-label">PREV CLOSE</span><span class="tick-val">29,096.00</span></div>
+      <div class="tick-item"><span class="tick-label">SSL SWEPT</span><span class="tick-val bear">28,834.75 ✓</span></div>
+      <div class="tick-item"><span class="tick-label">EQ TODAY</span><span class="tick-val neut">29,011.50</span></div>
+      <div class="tick-item"><span class="tick-label">ATR(14)</span><span class="tick-val">~200pts</span></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: APEX Panel -->
+  <div class="right">
+
+    <!-- Live APEX Status -->
+    <div class="section">
+      <div class="section-title">APEX STATUS</div>
+      <div class="apex-grid">
+        <div class="apex-cell"><div class="apex-val bull">BULL</div><div class="apex-key">4H Bias</div></div>
+        <div class="apex-cell"><div class="apex-val bull">6/6</div><div class="apex-key">Confluence</div></div>
+        <div class="apex-cell"><div class="apex-val bull">✓ SWEPT</div><div class="apex-key">SSL 28,834</div></div>
+        <div class="apex-cell"><div class="apex-val neut">WAIT</div><div class="apex-key">Entry Signal</div></div>
+        <div class="apex-cell"><div class="apex-val info">DISC</div><div class="apex-key">Prem/Disc</div></div>
+        <div class="apex-cell"><div class="apex-val bear">-0.56%</div><div class="apex-key">Day Change</div></div>
+      </div>
+    </div>
+
+    <!-- Trigger Checklist -->
+    <div class="section">
+      <div class="section-title">APEX ENTRY TRIGGERS — LONG</div>
+      <div class="check-row"><div class="chk chk-ok">✓</div><span class="chk-label">4H Bullish Bias</span><span class="chk-val bull">CONFIRMED</span></div>
+      <div class="check-row"><div class="chk chk-ok">✓</div><span class="chk-label">Price in Discount (< EQ)</span><span class="chk-val bull">28,934 vs 29,012</span></div>
+      <div class="check-row"><div class="chk chk-ok">✓</div><span class="chk-label">SSL Swept</span><span class="chk-val bull">28,834.75 ✓</span></div>
+      <div class="check-row"><div class="chk chk-ok">✓</div><span class="chk-label">Double Bottom (SMT)</span><span class="chk-val bull">28,842 / 28,843</span></div>
+      <div class="check-row"><div class="chk chk-wait">⏳</div><span class="chk-label">CHoCH on 15m (need > 29,006)</span><span class="chk-val neut">PENDING</span></div>
+      <div class="check-row"><div class="chk chk-wait">⏳</div><span class="chk-label">Displacement candle ≥ 1.5×ATR</span><span class="chk-val neut">WATCH</span></div>
+      <div class="check-row"><div class="chk chk-wait">⏳</div><span class="chk-label">FVG / OB for entry</span><span class="chk-val neut">28,907–28,960</span></div>
+      <div class="check-row"><div class="chk chk-wait">⏳</div><span class="chk-label">London Kill Zone Active</span><span class="chk-val neut">08–10 UTC</span></div>
+    </div>
+
+    <!-- London Scenario A -->
+    <div class="section">
+      <div class="section-title">LONDON SESSION — SCENARIOS</div>
+
+      <div class="scenario scenario-a">
+        <div class="sc-header">
+          <span class="sc-name bull">🟢 SCENARIO A — BULL</span>
+          <span class="sc-prob prob-bull">65%</span>
+        </div>
+        <div class="sc-desc">
+          Judas Swing already completed (28,834 sweep). London confirms CHoCH on 15m above 29,006. Displacement candle ≥200pts. FVG entry 28,907–28,960. Targets stack toward day BSL.
+        </div>
+        <div class="gauge-bar"><div class="gauge-fill" style="width:65%;background:linear-gradient(90deg,#238636,#3fb950)"></div></div>
+        <div style="margin-top:8px">
+          <div class="target-row"><span class="t-label bull">T1</span><span class="t-price bull">29,006</span><span class="t-pts">+72pts · CHoCH / EQ</span></div>
+          <div class="target-row"><span class="t-label bull">T2</span><span class="t-price bull">29,082–29,135</span><span class="t-pts">+148–201pts · FVG Fill</span></div>
+          <div class="target-row"><span class="t-label bull">T3</span><span class="t-price bull">29,188.5</span><span class="t-pts">+255pts · Day BSL / xOB</span></div>
+          <div class="target-row"><span class="t-label bull">T4</span><span class="t-price bull">29,274</span><span class="t-pts">+340pts · BSL1 Sweep</span></div>
+          <div class="target-row" style="border-top:1px solid #1c3a2a;margin-top:4px;padding-top:4px">
+            <span class="t-label" style="color:#7ee787;font-size:9px">ENTRY ZONE</span>
+            <span class="t-price" style="color:#7ee787;font-size:10px">28,907–28,960</span>
+            <span class="t-pts">FVG / OB</span>
+          </div>
+          <div class="target-row">
+            <span class="t-label" style="color:#f85149;font-size:9px">INVALIDATION</span>
+            <span class="t-price" style="color:#f85149;font-size:10px">28,814</span>
+            <span class="t-pts">SSL break below</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="scenario scenario-b">
+        <div class="sc-header">
+          <span class="sc-name bear">🔴 SCENARIO B — BEAR</span>
+          <span class="sc-prob prob-bear">35%</span>
+        </div>
+        <div class="sc-desc">
+          Bounce to 29,082–29,135 is the London Judas Swing (trap longs in FVG). Price fails to close above xOB and rolls over. Continuation of 4H lower highs pattern.
+        </div>
+        <div class="gauge-bar"><div class="gauge-fill" style="width:35%;background:linear-gradient(90deg,#b91c1c,#f85149)"></div></div>
+        <div style="margin-top:8px">
+          <div class="target-row"><span class="t-label bear">P1</span><span class="t-price bear">28,814</span><span class="t-pts">-120pts · SSL zone</span></div>
+          <div class="target-row"><span class="t-label bear">P2</span><span class="t-price bear">28,742</span><span class="t-pts">-192pts · Next SSL</span></div>
+          <div class="target-row"><span class="t-label bear">P3</span><span class="t-price bear">28,500</span><span class="t-pts">-434pts · Deep discount OB</span></div>
+          <div class="target-row" style="border-top:1px solid #3a1c1c;margin-top:4px;padding-top:4px">
+            <span class="t-label" style="color:#f85149;font-size:9px">SHORT ENTRY</span>
+            <span class="t-price" style="color:#f85149;font-size:10px">29,082–29,135</span>
+            <span class="t-pts">FVG rejection</span>
+          </div>
+          <div class="target-row">
+            <span class="t-label" style="color:#7ee787;font-size:9px">INVALIDATION</span>
+            <span class="t-price" style="color:#7ee787;font-size:10px">29,188.5</span>
+            <span class="t-pts">close above day high</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NY Session -->
+    <div class="section">
+      <div class="section-title">NEW YORK SESSION — CONDITIONAL TARGETS</div>
+      <div class="ny-depends">
+        NY targets depend entirely on <span class="highlight">what London delivers</span>. The two paths are mapped below. Watch for NY open 13:30 UTC reaction at whatever level London closes near.
+      </div>
+
+      <div class="scenario scenario-a" style="margin-bottom:6px">
+        <div class="sc-header">
+          <span class="sc-name bull" style="font-size:11px">🗽 IF LONDON BULLISH → NY EXTENDS</span>
+        </div>
+        <div class="target-row"><span class="t-label bull">NY T1</span><span class="t-price bull">29,188.5</span><span class="t-pts">Day BSL retest / break</span></div>
+        <div class="target-row"><span class="t-label bull">NY T2</span><span class="t-price bull">29,274</span><span class="t-pts">BSL1 sweep target</span></div>
+        <div class="target-row"><span class="t-label bull">NY T3</span><span class="t-price bull">29,419</span><span class="t-pts">4H FVG fill bottom</span></div>
+        <div class="target-row"><span class="t-label bull">NY T4</span><span class="t-price bull">29,486</span><span class="t-pts">4H FVG fill top</span></div>
+        <div class="target-row"><span class="t-label bull">NY T5</span><span class="t-price bull">29,600</span><span class="t-pts">4H BSL (swing target)</span></div>
+        <div style="margin-top:6px;padding-top:6px;border-top:1px solid #1c3a2a;font-size:9px;color:#6e7681">
+          NY SETUP: After London CHoCH confirmation, wait for NY open dip to 15m FVG (29,082–29,135) then long. Target partial @ T1, T2, trail to T3+
+        </div>
+      </div>
+
+      <div class="scenario scenario-b">
+        <div class="sc-header">
+          <span class="sc-name bear" style="font-size:11px">🗽 IF LONDON BEARISH → NY EXTENDS DOWN</span>
+        </div>
+        <div class="target-row"><span class="t-label bear">NY P1</span><span class="t-price bear">28,814</span><span class="t-pts">SSL zone / first target</span></div>
+        <div class="target-row"><span class="t-label bear">NY P2</span><span class="t-price bear">28,742</span><span class="t-pts">Next SSL pool</span></div>
+        <div class="target-row"><span class="t-label bear">NY P3</span><span class="t-price bear">28,500</span><span class="t-pts">Discount OB / weekly support</span></div>
+        <div class="target-row"><span class="t-label bear">NY P4</span><span class="t-price bear">28,000</span><span class="t-pts">Major HTF demand / VWAP</span></div>
+        <div style="margin-top:6px;padding-top:6px;border-top:1px solid #3a1c1c;font-size:9px;color:#6e7681">
+          NY SETUP: London Judas Swing to 29,082–29,135, reject xOB, short on MSS. Target P1 by NY open, P2 by noon ET, trail stop to cost.
+        </div>
+      </div>
+    </div>
+
+    <!-- All Levels Reference -->
+    <div class="section">
+      <div class="section-title">ALL KEY LEVELS — REFERENCE</div>
+      <div class="level-row"><div class="lvl-dot" style="background:#d29922"></div><span class="lvl-label">Weekly BSL (4H peak)</span><span class="lvl-price" style="color:#d29922">29,782</span></div>
+      <div class="level-row"><div class="lvl-dot" style="background:#3fb950"></div><span class="lvl-label">4H BSL / Swing High</span><span class="lvl-price bull">29,600</span></div>
+      <div class="level-row"><div class="lvl-dot" style="background:#3fb950"></div><span class="lvl-label">4H FVG Top</span><span class="lvl-price bull">29,486</span></div>
+      <div class="level-row"><div class="lvl-dot" style="background:#3fb950"></div><span class="lvl-label">4H FVG Bottom</span><span class="lvl-price bull">29,419</span></div>
+      <div class="level-row"><div class="lvl-dot" style="background:#58a6ff"></div><span class="lvl-label">BSL1 (prior high)</span><span class="lvl-price info">29,274</span></div>
+      <div class="level-row"><div class="lvl-dot" style="background:#f85149"></div><span class="lvl-label">Day BSL / xOB Top</span><span class="lvl-price bear">29,188.5</span></div>
+      <div class="level-row"><div class="lvl-dot" style="background:#f85149"></div><span class="lvl-label">xOB / FVG Zone</span><span class="lvl-price bear">29,135</span></div>
+      <div class="level-row"><div class="lvl-dot" style="background:#ff7b72"></div><span class="lvl-label">FVG Fill (15m) Top</span><span class="lvl-price" style="color:#ff7b72">29,082</span></div>
+      <div class="level-row"><div class="lvl-dot" style="background:#d29922"></div><span class="lvl-label">EQ Today (mid range)</span><span class="lvl-price neut">29,011.5</span></div>
+      <div class="level-row"><div class="lvl-dot" style="background:#79c0ff"></div><span class="lvl-label">▶ CURRENT PRICE</span><span class="lvl-price info">28,934</span></div>
+      <div class="level-row"><div class="lvl-dot" style="background:#388bfd"></div><span class="lvl-label">OB / FVG Entry Zone Top</span><span class="lvl-price info">28,960</span></div>
+      <div class="level-row"><div class="lvl-dot" style="background:#388bfd"></div><span class="lvl-label">OB / FVG Entry Zone Bot</span><span class="lvl-price info">28,907</span></div>
+      <div class="level-row"><div class="lvl-dot" style="background:#f85149"></div><span class="lvl-label">Day Low (before sweep)</span><span class="lvl-price bear">28,885</span></div>
+      <div class="level-row"><div class="lvl-dot" style="background:#f85149"></div><span class="lvl-label">SSL Swept ✓</span><span class="lvl-price bear">28,834.75</span></div>
+      <div class="level-row"><div class="lvl-dot" style="background:#b91c1c"></div><span class="lvl-label">Invalidation Level</span><span class="lvl-price" style="color:#b91c1c">28,814</span></div>
+      <div class="level-row"><div class="lvl-dot" style="background:#6e7681"></div><span class="lvl-label">Next SSL Pool</span><span class="lvl-price" style="color:#6e7681">28,742</span></div>
+      <div class="level-row"><div class="lvl-dot" style="background:#6e7681"></div><span class="lvl-label">Deep Discount OB</span><span class="lvl-price" style="color:#6e7681">28,500</span></div>
+    </div>
+
+    <div class="timestamp">Data: CME MICRO NQ1! · 15m · @mathieuc/tradingview · APEX Ultimate System v20.1 · May 19 2026</div>
+  </div>
+</div>
+
+<script>
+const BAR_DATA = [
+  // [time, open, high, low, close] — 15m bars (oldest→newest)
+  [1779111900,29167.5,29308.75,29135,29243.75],
+  [1779112800,29242.5,29272,29129,29261.5],
+  [1779113700,29259.25,29299,29137.25,29153.25],
+  [1779114600,29154,29175.75,28970.75,29087.75],
+  [1779115500,29087.75,29109,29002.5,29082.5],
+  [1779116400,29082.25,29126.25,29006,29065.75],
+  [1779117300,29066,29069.75,28956.25,28960.75],
+  [1779118200,28960.25,29065.25,28941.5,29000.75],
+  [1779119100,28999.75,29046.5,28978.5,28997.25],
+  [1779120000,28996.25,29030,28951.75,29027.5],
+  [1779120900,29026.5,29074,28859.25,28878.5],
+  [1779121800,28877.75,28961.5,28842.5,28922.75],
+  [1779122700,28921.75,29045.5,28907.75,29006],
+  [1779123600,29004.75,29038,28966.75,28995.75],
+  [1779124500,28995,29017.25,28966.25,29009.5],
+  [1779125400,29009.75,29029.75,28959.75,29011.25],
+  [1779126300,29011.75,29023,28972,29014],
+  [1779127200,29014.25,29020.5,28914.25,28917],
+  [1779128100,28916,28918.5,28834.75,28892.5],
+  [1779129000,28892.75,28915,28843.25,28873.75],
+];
+
+// Key horizontal levels
+const LEVELS = [
+  { price:29188.5, label:'Day BSL / xOB', color:'#f85149', dash:[5,3], lw:1.5 },
+  { price:29135,   label:'FVG Top (xOB)',  color:'#ff7b72', dash:[4,3], lw:1 },
+  { price:29082,   label:'FVG Bot',        color:'#ff7b72', dash:[4,3], lw:1 },
+  { price:29011.5, label:'EQ (Mid-Range)', color:'#d29922', dash:[6,3], lw:1.5 },
+  { price:29006,   label:'CHoCH Level',    color:'#58a6ff', dash:[3,3], lw:1.5 },
+  { price:28960,   label:'OB Top (Entry)', color:'#388bfd', dash:[4,2], lw:1 },
+  { price:28907,   label:'OB Bot (Entry)', color:'#388bfd', dash:[4,2], lw:1 },
+  { price:28885,   label:'Day Low',        color:'#f85149', dash:[3,2], lw:1 },
+  { price:28834.75,label:'SSL Swept ✓',   color:'#f85149', dash:[2,2], lw:2 },
+  { price:28814,   label:'Invalidation',   color:'#b91c1c', dash:[2,2], lw:1 },
+  { price:28742,   label:'Next SSL Pool',  color:'#6e7681', dash:[3,3], lw:1 },
+  { price:29274,   label:'BSL1',           color:'#3fb950', dash:[5,3], lw:1.5 },
+];
+
+// Scenario A targets (bull)
+const BULL_TARGETS = [
+  { price:29006,  label:'T1', color:'#3fb950' },
+  { price:29082,  label:'T2a', color:'#3fb950' },
+  { price:29135,  label:'T2b', color:'#3fb950' },
+  { price:29188.5,label:'T3', color:'#3fb950' },
+  { price:29274,  label:'T4', color:'#3fb950' },
+];
+
+function draw() {
+  const wrap = document.getElementById('chartWrap');
+  const cv = document.getElementById('cv');
+  const W = wrap.clientWidth;
+  const H = wrap.clientHeight;
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+
+  const PAD = { top:20, right:80, bottom:40, left:10 };
+  const cw = W - PAD.left - PAD.right;
+  const ch = H - PAD.top - PAD.bottom;
+
+  // price range
+  const allP = BAR_DATA.flatMap(b=>[b[2],b[3]]).concat([28742,28814,29188.5,29274]);
+  let pMin = Math.min(...allP) - 20;
+  let pMax = Math.max(...allP) + 60;
+  const pRange = pMax - pMin;
+
+  const pY = p => PAD.top + (1-(p-pMin)/pRange)*ch;
+  const barW = Math.max(4, Math.floor(cw / BAR_DATA.length) - 2);
+  const barStep = cw / BAR_DATA.length;
+
+  ctx.fillStyle = '#0d1117';
+  ctx.fillRect(0,0,W,H);
+
+  // Grid lines at price intervals
+  ctx.setLineDash([1,4]);
+  ctx.strokeStyle = '#1c2128';
+  ctx.lineWidth = 1;
+  const gridStep = 100;
+  const gridStart = Math.ceil(pMin/gridStep)*gridStep;
+  for(let p=gridStart; p<=pMax; p+=gridStep){
+    const y = pY(p);
+    ctx.beginPath(); ctx.moveTo(PAD.left,y); ctx.lineTo(W-PAD.right+4,y); ctx.stroke();
+    ctx.fillStyle='#3d444d'; ctx.font='9px monospace'; ctx.textAlign='right';
+    ctx.fillText(p.toLocaleString(),W-2,y+3);
+  }
+  ctx.setLineDash([]);
+
+  // Session background boxes
+  // Approximate session bars: bars 0-8 = London (adjust as needed based on timing)
+  // London: roughly first 8-10 bars, NY: remaining
+  // The high of 29,188.5 appears to be from before bar 0 (day open), bars show decline from ~29,299
+  // So London is approximately bars 0-9, NY starting bar 10+
+  const LONDON_END_BAR = 9;  // first ~10 bars = London decline
+  const NY_START_BAR   = 10; // bar 10 onward = NY / afternoon session
+
+  // London zone
+  const lx = PAD.left;
+  const lw = LONDON_END_BAR * barStep;
+  ctx.fillStyle = 'rgba(56,139,253,0.04)';
+  ctx.fillRect(lx, PAD.top, lw, ch);
+  ctx.strokeStyle = 'rgba(56,139,253,0.3)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(lx, PAD.top, lw, ch);
+  ctx.fillStyle = 'rgba(56,139,253,0.5)';
+  ctx.font = 'bold 10px Segoe UI';
+  ctx.textAlign = 'left';
+  ctx.fillText('🇬🇧 LONDON SESSION', lx+4, PAD.top+12);
+
+  // NY zone
+  const nx = PAD.left + NY_START_BAR * barStep;
+  const nw = cw - NY_START_BAR * barStep;
+  ctx.fillStyle = 'rgba(63,185,80,0.03)';
+  ctx.fillRect(nx, PAD.top, nw, ch);
+  ctx.strokeStyle = 'rgba(63,185,80,0.3)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(nx, PAD.top, nw, ch);
+  ctx.fillStyle = 'rgba(63,185,80,0.5)';
+  ctx.fillText('🗽 NEW YORK / OVERLAP', nx+4, PAD.top+12);
+
+  // FVG zones (shaded rectangles)
+  // OB entry zone
+  ctx.fillStyle = 'rgba(56,139,253,0.08)';
+  ctx.fillRect(PAD.left, pY(28960), cw, pY(28907)-pY(28960));
+  // FVG fill zone
+  ctx.fillStyle = 'rgba(248,81,73,0.08)';
+  ctx.fillRect(PAD.left, pY(29135), cw, pY(29082)-pY(29135));
+  // SSL sweep zone
+  ctx.fillStyle = 'rgba(185,28,28,0.08)';
+  ctx.fillRect(PAD.left, pY(28860), cw, pY(28814)-pY(28860));
+
+  // Draw horizontal key levels
+  for(const lv of LEVELS){
+    const y = pY(lv.price);
+    ctx.setLineDash(lv.dash);
+    ctx.strokeStyle = lv.color;
+    ctx.lineWidth = lv.lw;
+    ctx.beginPath(); ctx.moveTo(PAD.left,y); ctx.lineTo(W-PAD.right-4,y); ctx.stroke();
+    ctx.setLineDash([]);
+    // Label on right
+    ctx.fillStyle = lv.color;
+    ctx.font = `bold 9px monospace`;
+    ctx.textAlign = 'left';
+    ctx.fillText(`${lv.price.toLocaleString('en',{minimumFractionDigits:0})} ${lv.label}`, W-PAD.right+2, y+3);
+  }
+
+  // Current price line (solid cyan)
+  const curPrice = 28934;
+  const cy = pY(curPrice);
+  ctx.setLineDash([]);
+  ctx.strokeStyle = '#79c0ff';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(PAD.left,cy); ctx.lineTo(W-PAD.right-4,cy); ctx.stroke();
+  ctx.fillStyle='#1f4e79'; ctx.fillRect(W-PAD.right-4,cy-9,80,18);
+  ctx.fillStyle='#79c0ff'; ctx.font='bold 11px monospace'; ctx.textAlign='left';
+  ctx.fillText(`▶ ${curPrice.toLocaleString()}`, W-PAD.right-2, cy+4);
+
+  // Candlesticks
+  for(let i=0; i<BAR_DATA.length; i++){
+    const [,open,high,low,close] = BAR_DATA[i];
+    const x = PAD.left + i*barStep + barStep/2;
+    const bull = close >= open;
+    const color = bull ? '#3fb950' : '#f85149';
+    const bodyTop  = pY(Math.max(open,close));
+    const bodyBot  = pY(Math.min(open,close));
+    const bodyH    = Math.max(1, bodyBot-bodyTop);
+
+    // Wick
+    ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(x, pY(high)); ctx.lineTo(x, pY(low));
+    ctx.stroke();
+
+    // Body
+    ctx.fillStyle = color;
+    ctx.fillRect(x-barW/2, bodyTop, barW, bodyH);
+
+    // Outline
+    ctx.strokeStyle = bull ? '#238636' : '#b91c1c';
+    ctx.lineWidth = 0.5;
+    ctx.strokeRect(x-barW/2, bodyTop, barW, bodyH);
+  }
+
+  // Bull target arrows (Scenario A) — projected to the right
+  const lastX = PAD.left + (BAR_DATA.length-1)*barStep + barStep;
+  for(const t of BULL_TARGETS){
+    const ty = pY(t.price);
+    if(ty < PAD.top || ty > PAD.top+ch) continue;
+    ctx.strokeStyle = t.color+'80'; ctx.lineWidth = 1;
+    ctx.setLineDash([3,4]);
+    ctx.beginPath();
+    ctx.moveTo(lastX, pY(curPrice));
+    ctx.lineTo(lastX+30, ty);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Arrow head
+    ctx.fillStyle = t.color;
+    ctx.beginPath(); ctx.arc(lastX+30, ty, 3, 0, Math.PI*2); ctx.fill();
+    ctx.font='bold 9px monospace'; ctx.textAlign='left';
+    ctx.fillText(t.label, lastX+36, ty+3);
+  }
+
+  // Candlestick bar labels at bottom
+  ctx.fillStyle='#3d444d'; ctx.font='8px monospace'; ctx.textAlign='center';
+  const labelBars = [0,5,10,15,19];
+  const labels = ['Session\nStart','Judas\nSweep','SSL\nSwept','Bounce','Current'];
+  for(let i=0;i<labelBars.length;i++){
+    const bi = labelBars[i];
+    const x = PAD.left + bi*barStep + barStep/2;
+    ctx.fillText(labels[i], x, H-PAD.bottom+12);
+  }
+
+  // Annotations for key events
+  const annotate = (barIdx, label, color, offset=-20) => {
+    const x = PAD.left + barIdx*barStep + barStep/2;
+    const b = BAR_DATA[barIdx];
+    const y = pY(b[2]) + offset;
+    ctx.fillStyle = color;
+    ctx.font = 'bold 8px monospace';
+    ctx.textAlign='center';
+    ctx.fillText(label, x, y);
+  };
+  annotate(2, '▲ BSL', '#f85149', -10);  // High at 29,299
+  annotate(3, '◀CHoCH', '#ff7b72', -10); // Major selloff
+  annotate(10,'◀BOS', '#f85149', -10);   // New low 28,859
+  annotate(11,'SSL SWEEP', '#f85149', 12); // bar 11 low 28,842
+  annotate(12,'↑ BOUNCE', '#3fb950', -10); // Bounce begins
+  annotate(18,'2nd TEST', '#d29922', 12);  // Second test of low
+
+  // Legend box
+  const lbox = { x:PAD.left+5, y:PAD.top+20, w:200, h:60 };
+  ctx.fillStyle='rgba(13,17,23,0.85)';
+  ctx.fillRect(lbox.x, lbox.y, lbox.w, lbox.h);
+  ctx.strokeStyle='#21262d'; ctx.lineWidth=1; ctx.setLineDash([]);
+  ctx.strokeRect(lbox.x, lbox.y, lbox.w, lbox.h);
+  const legItems = [
+    {c:'#3fb950',l:'Bullish bar'},
+    {c:'#f85149',l:'Bearish bar'},
+    {c:'#388bfd',l:'OB Entry zone'},
+    {c:'#ff7b72',l:'FVG fill zone'},
+    {c:'#b91c1c',l:'SSL / Invalidation'},
+  ];
+  legItems.forEach((it,i)=>{
+    ctx.fillStyle=it.c;
+    ctx.fillRect(lbox.x+6, lbox.y+6+i*10, 8, 8);
+    ctx.fillStyle='#8b949e'; ctx.font='8px monospace'; ctx.textAlign='left';
+    ctx.fillText(it.l, lbox.x+18, lbox.y+13+i*10);
+  });
+
+  ctx.setLineDash([]);
+}
+
+window.addEventListener('resize', draw);
+draw();
+</script>
+</body>
+</html>

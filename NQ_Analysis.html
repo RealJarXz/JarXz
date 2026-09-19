@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NQ1! — APEX Analysis</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0d1117; color: #e6edf3; font-family: 'Courier New', monospace; padding: 20px; }
+  h1 { color: #58a6ff; font-size: 18px; border-bottom: 1px solid #30363d; padding-bottom: 8px; margin-bottom: 16px; }
+  h2 { color: #7ee787; font-size: 13px; margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 1px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 14px; }
+  .price { font-size: 28px; color: #f85149; font-weight: bold; }
+  .price.up { color: #3fb950; }
+  .stat { display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; border-bottom: 1px solid #21262d; }
+  .stat:last-child { border: none; }
+  .stat .label { color: #8b949e; }
+  .stat .val { font-weight: bold; }
+  .bull { color: #3fb950; }
+  .bear { color: #f85149; }
+  .neutral { color: #d29922; }
+  .chart-container { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 14px; margin-bottom: 16px; position: relative; }
+  canvas { display: block; width: 100%; }
+  .levels-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .level-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 4px; margin: 3px 0; font-size: 12px; }
+  .level-row.bsl { background: rgba(248,81,73,0.15); border-left: 3px solid #f85149; }
+  .level-row.ssl { background: rgba(63,185,80,0.15); border-left: 3px solid #3fb950; }
+  .level-row.fvg { background: rgba(210,153,34,0.15); border-left: 3px solid #d29922; }
+  .level-row.current { background: rgba(88,166,255,0.15); border-left: 3px solid #58a6ff; }
+  .level-row.eq { background: rgba(139,148,158,0.15); border-left: 3px solid #8b949e; }
+  .level-price { font-size: 14px; font-weight: bold; min-width: 70px; }
+  .level-desc { color: #8b949e; font-size: 11px; }
+  .badge { font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: bold; margin-left: auto; }
+  .badge.t1 { background: #1f6feb; color: #fff; }
+  .badge.t2 { background: #388bfd; color: #fff; }
+  .badge.t3 { background: #58a6ff; color: #0d1117; }
+  .badge.t4 { background: #cae8ff; color: #0d1117; }
+  .badge.stop { background: #da3633; color: #fff; }
+  .badge.entry { background: #d29922; color: #0d1117; }
+  .badge.major { background: #f85149; color: #fff; }
+  .step-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .step { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 10px; font-size: 11px; }
+  .step .step-num { color: #58a6ff; font-weight: bold; font-size: 10px; }
+  .step .step-title { color: #e6edf3; font-weight: bold; margin: 2px 0; font-size: 12px; }
+  .step .step-val { color: #7ee787; }
+  .step .step-val.bear { color: #f85149; }
+  .step .step-val.warn { color: #d29922; }
+  .venom { display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #161b22; border-radius: 6px; border: 1px solid #30363d; margin-bottom: 12px; }
+  .venom-phase { text-align: center; padding: 6px 10px; border-radius: 4px; font-size: 11px; }
+  .venom-phase.done { background: #21262d; color: #8b949e; }
+  .venom-phase.active { background: #d29922; color: #0d1117; font-weight: bold; }
+  .venom-phase.next { background: #1f6feb22; color: #58a6ff; border: 1px dashed #58a6ff; }
+  .arrow { color: #30363d; font-size: 18px; }
+  .indicator-bar { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid #21262d; font-size: 12px; }
+  .indicator-bar:last-child { border: none; }
+  .ind-name { color: #8b949e; min-width: 120px; }
+  .ind-val { font-weight: bold; min-width: 80px; }
+  .ind-signal { font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: bold; }
+  .sig-bull { background: #3fb95022; color: #3fb950; border: 1px solid #3fb950; }
+  .sig-bear { background: #f8514922; color: #f85149; border: 1px solid #f85149; }
+  .sig-neutral { background: #d2992222; color: #d29922; border: 1px solid #d29922; }
+  .trade-box { background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 14px; margin-bottom: 12px; }
+  .trade-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .trade-type { font-size: 13px; font-weight: bold; padding: 3px 12px; border-radius: 4px; }
+  .trade-type.short { background: #f8514922; color: #f85149; border: 1px solid #f85149; }
+  .trade-type.long { background: #3fb95022; color: #3fb950; border: 1px solid #3fb950; }
+  .rr-badge { font-size: 12px; color: #d29922; font-weight: bold; }
+  .trade-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; border-bottom: 1px solid #21262d; }
+  .trade-row:last-child { border: none; }
+  .trade-label { color: #8b949e; }
+  .invalidation-box { background: #da363322; border: 1px solid #f85149; border-radius: 6px; padding: 10px; font-size: 12px; text-align: center; margin-top: 10px; }
+  footer { text-align: center; color: #8b949e; font-size: 10px; margin-top: 20px; padding-top: 10px; border-top: 1px solid #30363d; }
+</style>
+</head>
+<body>
+
+<h1>⚡ NQ1! (CME_MINI:NQ1!) — APEX Ultimate System Analysis · Live</h1>
+
+<!-- QUOTE BAR -->
+<div class="grid">
+  <div class="card">
+    <div class="stat"><span class="label">Current Price</span><span class="val" style="font-size:20px;color:#f85149">29,006</span></div>
+    <div class="stat"><span class="label">Day Open</span><span class="val">29,135</span></div>
+    <div class="stat"><span class="label">Day High (BSL)</span><span class="val bear">29,419.75 ✗ swept</span></div>
+    <div class="stat"><span class="label">Day Low (SSL)</span><span class="val bull">28,842.50 ✓ swept</span></div>
+    <div class="stat"><span class="label">Prev Close (PDC)</span><span class="val">29,231.75</span></div>
+    <div class="stat"><span class="label">Day Change</span><span class="val bear">-0.88%</span></div>
+    <div class="stat"><span class="label">Volume</span><span class="val">652,594</span></div>
+  </div>
+  <div class="card">
+    <div class="stat"><span class="label">ATR (15m, 14p)</span><span class="val bear">~116 pts</span></div>
+    <div class="stat"><span class="label">Session Range</span><span class="val">577 pts (29,419–28,842)</span></div>
+    <div class="stat"><span class="label">Equilibrium</span><span class="val neutral">29,131 (midpoint)</span></div>
+    <div class="stat"><span class="label">Price vs EQ</span><span class="val bull">DISCOUNT (-125 pts)</span></div>
+    <div class="stat"><span class="label">15m RSI (est.)</span><span class="val bull">~31 (OVERSOLD)</span></div>
+    <div class="stat"><span class="label">Major BSL (Wk)</span><span class="val bear">29,782 (May 14 peak)</span></div>
+    <div class="stat"><span class="label">Major SSL (Wk)</span><span class="val bull">28,742 (May 12 low)</span></div>
+  </div>
+</div>
+
+<!-- VENOM CYCLE -->
+<h2>Venom Cycle — Current Phase</h2>
+<div class="venom">
+  <div class="venom-phase done">① Accumulation<br><small>28,920–28,990</small></div>
+  <div class="arrow">→</div>
+  <div class="venom-phase done">② Manipulation<br><small>Judas: 29,419 BSL</small></div>
+  <div class="arrow">→</div>
+  <div class="venom-phase done">③ Displacement<br><small>–577 pts drop</small></div>
+  <div class="arrow">→</div>
+  <div class="venom-phase active">④ DISTRIBUTION<br><small>NOW: 28,960–29,045</small></div>
+  <div class="arrow">→</div>
+  <div class="venom-phase next">⑤ Reversal<br><small>Target TBD</small></div>
+</div>
+
+<!-- PRICE LEVEL MAP (canvas chart) -->
+<div class="chart-container">
+  <canvas id="chart" height="440"></canvas>
+</div>
+
+<!-- APEX STEPS -->
+<h2>APEX 7-Step Breakdown</h2>
+<div class="step-grid" style="margin-bottom:16px">
+  <div class="step">
+    <div class="step-num">STEP 1</div>
+    <div class="step-title">HTF Bias (4H)</div>
+    <div class="step-val bear">BEARISH (short-term)</div>
+    <small style="color:#8b949e">Lower highs from 29,782 peak: 29,734→29,600→29,419. Macro bull from 27K but 4H structure rolling over.</small>
+  </div>
+  <div class="step">
+    <div class="step-num">STEP 2</div>
+    <div class="step-title">Liquidity Map</div>
+    <div class="step-val">BSL: 29,419 / 29,782<br>SSL: 28,842 / 28,742</div>
+    <small style="color:#8b949e">Both today's BSL+SSL swept. Next major targets: 29,600–29,782 (up) or 28,742→28,500 (down).</small>
+  </div>
+  <div class="step">
+    <div class="step-num">STEP 3</div>
+    <div class="step-title">Sweep Confirmed</div>
+    <div class="step-val bear">✅ BSL 29,419 swept (12:45 UTC)<br>✅ SSL 28,842 swept (16:30 UTC)</div>
+    <small style="color:#8b949e">Judas Swing complete. Double sweep session.</small>
+  </div>
+  <div class="step">
+    <div class="step-num">STEP 4</div>
+    <div class="step-title">Confirmation Needed</div>
+    <div class="step-val warn">⚠ Waiting for CHoCH</div>
+    <small style="color:#8b949e">Short: need 15m bearish CHoCH rejection at 29,082–29,135. Long: need bullish CHoCH above 29,045 holding.</small>
+  </div>
+  <div class="step">
+    <div class="step-num">STEP 5</div>
+    <div class="step-title">FVG / OB Zones</div>
+    <div class="step-val">Bearish FVG: 29,082–29,135<br>Bullish OB: 28,842–28,920</div>
+    <small style="color:#8b949e">Price currently below bearish FVG. Retest of 29,082–29,135 = short entry zone.</small>
+  </div>
+  <div class="step">
+    <div class="step-num">STEP 6</div>
+    <div class="step-title">Premium / Discount</div>
+    <div class="step-val bull">DISCOUNT (29,006 vs EQ 29,131)</div>
+    <small style="color:#8b949e">Below equilibrium. Good for longs ONLY after SSL sweep + bullish MSS. Currently in no-man's land.</small>
+  </div>
+  <div class="step">
+    <div class="step-num">STEP 7</div>
+    <div class="step-title">Targets</div>
+    <div class="step-val">Short: 28,842 → 28,742 → 28,500<br>Long: 29,135 → 29,299 → 29,419</div>
+    <small style="color:#8b949e">Short has more confluence with 4H lower high structure. Long viable only above 29,135.</small>
+  </div>
+  <div class="step">
+    <div class="step-num">INDICATORS</div>
+    <div class="step-title">Signal Read</div>
+    <div class="step-val warn">Mixed / Oversold Bounce</div>
+    <small style="color:#8b949e">15m RSI ~31 (oversold). 1H shows lower highs. Volume spike on selloff = distribution. 50 EMA ~29,150 = resistance.</small>
+  </div>
+</div>
+
+<!-- INDICATOR PANEL -->
+<h2>Indicator Signals</h2>
+<div class="card" style="margin-bottom:16px">
+  <div class="indicator-bar"><span class="ind-name">RSI 14 (15m)</span><span class="ind-val bear">~31</span><span class="ind-signal sig-bull">OVERSOLD</span><span style="font-size:11px;color:#8b949e;margin-left:auto">bounce expected, not reversal</span></div>
+  <div class="indicator-bar"><span class="ind-name">RSI 14 (1H)</span><span class="ind-val bear">~38</span><span class="ind-signal sig-bear">BEARISH</span><span style="font-size:11px;color:#8b949e;margin-left:auto">downtrend confirmed</span></div>
+  <div class="indicator-bar"><span class="ind-name">50 EMA (1H)</span><span class="ind-val bear">~29,150</span><span class="ind-signal sig-bear">RESISTANCE</span><span style="font-size:11px;color:#8b949e;margin-left:auto">price below EMA</span></div>
+  <div class="indicator-bar"><span class="ind-name">200 EMA (1H)</span><span class="ind-val neutral">~28,900</span><span class="ind-signal sig-neutral">SUPPORT</span><span style="font-size:11px;color:#8b949e;margin-left:auto">near session low area</span></div>
+  <div class="indicator-bar"><span class="ind-name">MACD (12,26,9) 1H</span><span class="ind-val bear">Negative</span><span class="ind-signal sig-bear">BEARISH X</span><span style="font-size:11px;color:#8b949e;margin-left:auto">histogram expanding bear</span></div>
+  <div class="indicator-bar"><span class="ind-name">Volume (session)</span><span class="ind-val bear">652K</span><span class="ind-signal sig-bear">HIGH</span><span style="font-size:11px;color:#8b949e;margin-left:auto">selloff volume above avg</span></div>
+  <div class="indicator-bar"><span class="ind-name">ATR 14 (15m)</span><span class="ind-val bear">~116 pts</span><span class="ind-signal sig-bear">EXTREME</span><span style="font-size:11px;color:#8b949e;margin-left:auto">high volatility, wide stops</span></div>
+  <div class="indicator-bar"><span class="ind-name">Displacement</span><span class="ind-val bear">577 pts (5x ATR)</span><span class="ind-signal sig-bear">CONFIRMED</span><span style="font-size:11px;color:#8b949e;margin-left:auto">strong displacement ✅</span></div>
+</div>
+
+<!-- TRADE SETUPS -->
+<h2>Live Trade Setups</h2>
+
+<div class="trade-box">
+  <div class="trade-header">
+    <div class="trade-type short">SHORT — Primary Setup</div>
+    <div class="rr-badge">R:R 3.2:1 (estimated)</div>
+  </div>
+  <div class="trade-row"><span class="trade-label">Wait for</span><span class="val bear">Price bounces to 29,082–29,135 FVG</span></div>
+  <div class="trade-row"><span class="trade-label">Trigger</span><span class="val bear">15m bearish CHoCH at 29,082–29,135</span></div>
+  <div class="trade-row"><span class="trade-label">Entry</span><span class="val">29,082–29,100 (FVG midpoint)</span></div>
+  <div class="trade-row"><span class="trade-label">Stop Loss</span><span class="val bear">Above 29,175 (+75–90 pts)</span></div>
+  <div class="trade-row"><span class="trade-label">Target 1</span><span class="val bull">28,907 (OB / session LOD area) — +175 pts</span></div>
+  <div class="trade-row"><span class="trade-label">Target 2</span><span class="val bull">28,842 (session SSL) — +240 pts</span></div>
+  <div class="trade-row"><span class="trade-label">Target 3</span><span class="val bull">28,742 (May 12 SSL) — +340 pts</span></div>
+  <div class="trade-row"><span class="trade-label">Confluence</span><span class="val">4H lower highs ✅ | BSL swept ✅ | Below 50 EMA ✅ | MACD bear ✅</span></div>
+</div>
+
+<div class="trade-box">
+  <div class="trade-header">
+    <div class="trade-type long">LONG — Secondary / Risky</div>
+    <div class="rr-badge">R:R 2.5:1 (if triggers)</div>
+  </div>
+  <div class="trade-row"><span class="trade-label">Condition</span><span class="val bull">SSL swept 28,842 ✅ | Need bullish CHoCH</span></div>
+  <div class="trade-row"><span class="trade-label">Entry</span><span class="val">28,907–28,960 (bullish OB / FVG retest)</span></div>
+  <div class="trade-row"><span class="trade-label">Stop Loss</span><span class="val bear">Below 28,742 (-165 pts)</span></div>
+  <div class="trade-row"><span class="trade-label">Target 1</span><span class="val bull">29,135 (day open) — +175 pts</span></div>
+  <div class="trade-row"><span class="trade-label">Target 2</span><span class="val bull">29,299 (prev 4H close) — +340 pts</span></div>
+  <div class="trade-row"><span class="trade-label">Target 3</span><span class="val bull">29,419 (BSL retest) — +460 pts</span></div>
+  <div class="trade-row"><span class="trade-label">Warning</span><span class="val bear">Against 4H lower-high structure — wait for clear 1H CHoCH</span></div>
+</div>
+
+<!-- TARGET LEVELS REFERENCE -->
+<div class="levels-grid">
+  <div>
+    <h2>Resistance / BSL Targets (Bear R:R)</h2>
+    <div class="level-row bsl"><span class="level-price bear">29,782</span><span class="level-desc">May 14 WEEKLY HIGH — absolute BSL</span><span class="badge major">MAJOR</span></div>
+    <div class="level-row bsl"><span class="level-price bear">29,734</span><span class="level-desc">May 14 closing area / PWH</span><span class="badge t4">T4</span></div>
+    <div class="level-row bsl"><span class="level-price bear">29,600</span><span class="level-desc">May 15 high — equal high cluster</span><span class="badge t3">T3</span></div>
+    <div class="level-row bsl"><span class="level-price bear">29,486</span><span class="level-desc">May 15 BSL — weak high</span><span class="badge t2">T2</span></div>
+    <div class="level-row bsl"><span class="level-price bear">29,419</span><span class="level-desc">Today's session high — BSL swept</span><span class="badge t2">T2</span></div>
+    <div class="level-row fvg"><span class="level-price neutral">29,299</span><span class="level-desc">Previous 4H close / FVG top</span><span class="badge t1">T1</span></div>
+    <div class="level-row fvg"><span class="level-price neutral">29,135</span><span class="level-desc">Day open / equilibrium base</span><span class="badge entry">ENTRY</span></div>
+    <div class="level-row fvg"><span class="level-price neutral">29,082</span><span class="level-desc">Bearish FVG bottom / entry zone</span><span class="badge entry">ENTRY</span></div>
+  </div>
+  <div>
+    <h2>Support / SSL Targets (Bull R:R)</h2>
+    <div class="level-row current"><span class="level-price" style="color:#58a6ff">29,006</span><span class="level-desc">CURRENT PRICE</span><span class="badge" style="background:#58a6ff;color:#000">NOW</span></div>
+    <div class="level-row eq"><span class="level-price neutral">28,996</span><span class="level-desc">Minor S/R flip — 1H level</span><span class="badge t1">S1</span></div>
+    <div class="level-row eq"><span class="level-price neutral">28,960</span><span class="level-desc">Minor support / bounce zone</span><span class="badge t1">S1</span></div>
+    <div class="level-row ssl"><span class="level-price bull">28,907</span><span class="level-desc">OB / reaction low — key support</span><span class="badge t2">T1</span></div>
+    <div class="level-row ssl"><span class="level-price bull">28,842</span><span class="level-desc">Today's SSL (session low) — swept</span><span class="badge t2">T2</span></div>
+    <div class="level-row ssl"><span class="level-price bull">28,742</span><span class="level-desc">May 12 SSL — major support</span><span class="badge t3">T3</span></div>
+    <div class="level-row ssl"><span class="level-price bull">28,500</span><span class="level-desc">Round number / prior demand</span><span class="badge t3">T3</span></div>
+    <div class="level-row ssl"><span class="level-price bull">28,000</span><span class="level-desc">Monthly round number — macro SSL</span><span class="badge major">MAJOR</span></div>
+  </div>
+</div>
+
+<div class="invalidation-box">
+  ⚠ SHORT INVALIDATION: Clean break + close above <strong>29,419</strong> (today's BSL) → reassess long bias targeting 29,600–29,782<br>
+  ⚠ LONG INVALIDATION: Break + 1H close below <strong>28,742</strong> (May 12 SSL) → target 28,500 → 28,000
+</div>
+
+<footer>
+  APEX Ultimate System · ICT/SMC/TJR · NQ1! CME Futures · Live via TradingView WebSocket · Not financial advice
+</footer>
+
+<script>
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+
+// Responsive canvas
+function resize() {
+  canvas.width = canvas.parentElement.clientWidth - 28;
+  canvas.height = 440;
+  draw();
+}
+
+const levels = [
+  { price: 29782, label: 'WEEKLY BSL — May 14 Peak', color: '#f85149', dash: [4,4], thick: 2 },
+  { price: 29734, label: 'PDW High / BSL', color: '#f85149', dash: [2,4], thick: 1 },
+  { price: 29600, label: 'May 15 High — Equal High', color: '#f85149', dash: [3,3], thick: 1 },
+  { price: 29486, label: 'May 15 BSL — Weak High', color: '#e8736f', dash: [2,4], thick: 1 },
+  { price: 29419.75, label: 'TODAY BSL SWEPT ✗', color: '#f85149', dash: [], thick: 2 },
+  { price: 29299, label: 'Prev 4H Close / FVG Top', color: '#d29922', dash: [3,3], thick: 1 },
+  { price: 29231.75, label: 'PDC (Prev Close)', color: '#8b949e', dash: [4,4], thick: 1 },
+  { price: 29135, label: 'Day Open / Equilibrium', color: '#58a6ff', dash: [3,3], thick: 2 },
+  { price: 29082, label: 'Bearish FVG — SHORT ENTRY', color: '#d29922', dash: [], thick: 2 },
+  { price: 29006, label: '▶ PRICE NOW', color: '#58a6ff', dash: [], thick: 3, current: true },
+  { price: 28960, label: 'Minor Support', color: '#8b949e', dash: [2,4], thick: 1 },
+  { price: 28907, label: 'OB / Reaction Low', color: '#3fb950', dash: [3,3], thick: 1 },
+  { price: 28842.5, label: 'TODAY SSL SWEPT ✓', color: '#3fb950', dash: [], thick: 2 },
+  { price: 28742, label: 'May 12 SSL — MAJOR TARGET', color: '#3fb950', dash: [], thick: 2 },
+  { price: 28500, label: 'Round Number — T3', color: '#3fb950', dash: [4,4], thick: 1 },
+  { price: 28000, label: 'Monthly Round — MACRO SSL', color: '#3fb950', dash: [2,4], thick: 1 },
+];
+
+const priceMin = 27800;
+const priceMax = 29900;
+
+function priceToY(p) {
+  return canvas.height * (1 - (p - priceMin) / (priceMax - priceMin));
+}
+
+function draw() {
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#161b22';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = '#21262d';
+  ctx.lineWidth = 1;
+  for (let p = 28000; p <= 30000; p += 100) {
+    ctx.setLineDash([1,3]);
+    ctx.beginPath();
+    const y = priceToY(p);
+    ctx.moveTo(60, y); ctx.lineTo(W, y);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // FVG shading (bearish FVG: 29082-29135)
+  const fvgTop = priceToY(29135);
+  const fvgBot = priceToY(29082);
+  ctx.fillStyle = 'rgba(210,153,34,0.08)';
+  ctx.fillRect(60, fvgTop, W - 60, fvgBot - fvgTop);
+
+  // OB shading (bullish OB: 28842-28920)
+  const obTop = priceToY(28920);
+  const obBot = priceToY(28842);
+  ctx.fillStyle = 'rgba(63,185,80,0.08)';
+  ctx.fillRect(60, obTop, W - 60, obBot - obTop);
+
+  // Draw levels
+  levels.forEach(l => {
+    const y = priceToY(l.price);
+    ctx.strokeStyle = l.current ? l.color : l.color + (l.thick === 1 ? '99' : 'cc');
+    ctx.lineWidth = l.thick;
+    ctx.setLineDash(l.dash);
+    ctx.beginPath();
+    ctx.moveTo(60, y); ctx.lineTo(W - 140, y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Label
+    ctx.fillStyle = l.current ? '#58a6ff' : l.color;
+    ctx.font = l.current ? 'bold 11px Courier New' : (l.thick >= 2 ? 'bold 10px Courier New' : '9px Courier New');
+    ctx.fillText(l.price.toLocaleString(), 0, y + 4);
+    ctx.font = l.current ? 'bold 10px Courier New' : '9px Courier New';
+    ctx.fillText(l.label, W - 138, y + 4);
+  });
+
+  // Price axis label highlight for current
+  const curY = priceToY(29006);
+  ctx.fillStyle = '#58a6ff';
+  ctx.fillRect(0, curY - 8, 58, 16);
+  ctx.fillStyle = '#0d1117';
+  ctx.font = 'bold 10px Courier New';
+  ctx.fillText('29,006', 1, curY + 4);
+
+  // Zone labels
+  ctx.font = 'bold 9px Courier New';
+  ctx.fillStyle = '#d2992244';
+  ctx.fillText('BEARISH FVG', W - 135, priceToY(29108) + 4);
+  ctx.fillStyle = '#3fb95044';
+  ctx.fillText('BULLISH OB', W - 135, priceToY(28880) + 4);
+}
+
+window.addEventListener('resize', resize);
+resize();
+</script>
+</body>
+</html>
