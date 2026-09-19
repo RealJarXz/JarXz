@@ -21,8 +21,9 @@ if (useHttp) {
     await server.connect(transport);
   });
 
-  // Message endpoint — client posts JSON-RPC here
-  app.post('/messages', express.json(), async (req, res) => {
+  // Message endpoint — client posts JSON-RPC here.
+  // No body-parsing middleware: handlePostMessage reads the raw request stream itself.
+  app.post('/messages', async (req, res) => {
     const transport = transports.get(req.query.sessionId);
     if (!transport) return res.status(404).send('Session not found');
     await transport.handlePostMessage(req, res);
